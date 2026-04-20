@@ -1,6 +1,6 @@
 # Insurance Claim Helpers
 
-보험 약관 PDF를 분석해 사전에 청구 가능 여부를 판단하고, 가입자 편에서 약관을 해석해주는 서비스
+보험 약관 PDF를 분석해 사전에 청구 가능 여부를 판단하고 가입자 편에서 약관을 해석해주는 서비스
 
 ---
 
@@ -16,11 +16,11 @@
 
 | 구분 | 기술 |
 |------|------|
-| Backend | Java 17, Spring Boot |
+| Backend | Java 21, Spring Boot |
 | Frontend | React |
 | AI (생성) | Claude API (Anthropic) |
 | AI (검색) | OpenAI Embedding |
-| Database | PostgreSQL, pgVector |
+| Database | PostgreSQL 16, pgVector |
 
 ## 아키텍처
 
