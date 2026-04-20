@@ -1,2 +1,7 @@
 CLAUDE.md
 .idea/
+build/
+*.class
+*.jar
+.env
+*.env
