@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/claimhelpers
+    username: sowankyu
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+
+  ai:
+    openai:
+      api-key: CHANGE_ME
+      embedding:
+        options:
+          # text-embedding-ada-002: 1536차원
+          model: text-embedding-ada-002
+    anthropic:
+      api-key: CHANGE_ME
+    vectorstore:
+      pgvector:
+        dimensions: 1536
+        index-type: hnsw
+        distance-type: cosine_distance
