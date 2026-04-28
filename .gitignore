@@ -36,6 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### Superpowers (AI 설계/계획 문서) ###
+docs/superpowers/
+
 ### Security & Build Artifacts ###
 *.class
 *.jar
