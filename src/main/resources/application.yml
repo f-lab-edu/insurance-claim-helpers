@@ -1,7 +1,7 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/claimhelpers
-    username:
+    username: sowankyu
     password:
 
   jpa:
@@ -14,13 +14,13 @@ spring:
 
   ai:
     openai:
-      api-key:
+      api-key: CHANGE_ME
       embedding:
         options:
           # text-embedding-ada-002: 1536차원
           model: text-embedding-ada-002
     anthropic:
-      api-key:
+      api-key: CHANGE_ME
     vectorstore:
       pgvector:
         dimensions: 1536
