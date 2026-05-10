@@ -1,5 +1,6 @@
 CLAUDE.md
 HELP.md
+Todo.md
 .gradle
 build/
 !**/src/main/**/build/
