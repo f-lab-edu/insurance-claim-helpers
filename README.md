@@ -25,3 +25,36 @@
 ## 아키텍처
 
 [아키텍처 문서 보기](docs/specs/2026-04-20-architecture.md)
+
+## 로컬 개발 환경 구성
+
+**사전 요구사항:** JDK 21, Docker Desktop, OpenAI/Anthropic API Key
+
+### 1. 인프라 실행
+
+```bash
+docker compose up -d
+```
+
+### 2. API 키 설정
+
+**IntelliJ:** Run Configuration → Environment Variables
+
+| 변수명 | 값 |
+|--------|-----|
+| `SPRING_AI_OPENAI_API_KEY` | OpenAI API Key |
+| `SPRING_AI_ANTHROPIC_API_KEY` | Anthropic API Key |
+
+**CLI:**
+```bash
+export SPRING_AI_OPENAI_API_KEY=sk-...
+export SPRING_AI_ANTHROPIC_API_KEY=sk-ant-...
+```
+
+### 3. 앱 실행
+
+DB 접속 정보는 `application.yml` 기본값이 docker-compose 설정과 일치하므로 별도 설정 불필요.
+
+```bash
+./gradlew bootRun
+```
