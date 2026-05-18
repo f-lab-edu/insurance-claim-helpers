@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/claimhelpers
-    username: sowankyu
-    password:
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:insurance_claim_helpers}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
 
   jpa:
     hibernate:
