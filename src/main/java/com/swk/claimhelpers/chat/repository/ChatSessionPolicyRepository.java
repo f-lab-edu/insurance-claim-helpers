@@ -4,8 +4,7 @@ import com.swk.claimhelpers.chat.entity.ChatSessionPolicy;
 import com.swk.claimhelpers.chat.entity.ChatSessionPolicyId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public interface ChatSessionPolicyRepository extends JpaRepository<ChatSessionPolicy, ChatSessionPolicyId> {
 
