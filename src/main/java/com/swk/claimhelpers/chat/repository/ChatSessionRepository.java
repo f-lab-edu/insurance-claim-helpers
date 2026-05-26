@@ -5,9 +5,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.*;
 
-public interface ChatSessionRepository extends JpaRepository<ChatSession, UUID> {
+public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> {
 
-    List<ChatSession> findByUserId(UUID userId);
+    List<ChatSession> findByUserId(Long userId);
 
     Optional<ChatSession> findBySessionKey(String sessionKey);
 }

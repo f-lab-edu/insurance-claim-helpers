@@ -3,10 +3,8 @@ package com.swk.claimhelpers.chat.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "chat_messages")
@@ -15,9 +13,9 @@ import java.util.UUID;
 public class ChatMessage {
 
     @Id
-    @UuidGenerator
-    @Column(name = "id", updatable = false, nullable = false)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "chat_session_id", nullable = false)

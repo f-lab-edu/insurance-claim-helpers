@@ -1,6 +1,6 @@
 package com.swk.claimhelpers.policy.entity;
 
-public enum PolicyStatus {
+public enum ClaimCriteriaStatus {
     PENDING,
     PROCESSING,
     COMPLETED,
