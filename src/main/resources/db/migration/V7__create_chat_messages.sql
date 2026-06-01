@@ -1,6 +1,6 @@
 CREATE TABLE chat_messages (
-    id              UUID        PRIMARY KEY,
-    chat_session_id UUID        NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE,
+    id              BIGSERIAL   PRIMARY KEY,
+    chat_session_id BIGINT      NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE,
     role            VARCHAR(20) NOT NULL,
     content         TEXT        NOT NULL,
     created_at      TIMESTAMP   NOT NULL DEFAULT now()

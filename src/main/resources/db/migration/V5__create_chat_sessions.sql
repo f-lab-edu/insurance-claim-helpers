@@ -1,6 +1,6 @@
 CREATE TABLE chat_sessions (
-    id          UUID         PRIMARY KEY,
-    user_id     UUID         REFERENCES users(id) ON DELETE CASCADE,
+    id          BIGSERIAL    PRIMARY KEY,
+    user_id     BIGINT       REFERENCES users(id) ON DELETE CASCADE,
     session_key VARCHAR(255),
     created_at  TIMESTAMP    NOT NULL DEFAULT now(),
     updated_at  TIMESTAMP    NOT NULL DEFAULT now(),
