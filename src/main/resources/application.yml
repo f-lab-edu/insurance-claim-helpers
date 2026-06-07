@@ -12,6 +12,19 @@ spring:
   flyway:
     enabled: true
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:                                    # registrationId = "google"
+            client-id: ${GOOGLE_CLIENT_ID}           # 앱 신분증 (환경변수 주입)
+            client-secret: ${GOOGLE_CLIENT_SECRET}   # 앱 비밀키 (환경변수 주입)
+            scope:                                    # 구글에 요청할 정보 범위
+              - openid                                #   신원 토큰(id_token) → OIDC
+              - email                                 #   이메일
+              - profile                               #   이름 등 프로필
+            redirect-uri: "{baseUrl}/auth/google/callback"  # 콜백 경로(커스텀)
+
   ai:
     openai:
       api-key: CHANGE_ME
