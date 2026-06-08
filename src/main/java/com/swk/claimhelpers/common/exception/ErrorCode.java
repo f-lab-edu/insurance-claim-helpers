@@ -1,0 +1,24 @@
+package com.swk.claimhelpers.common.exception;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+/**
+ * 애플리케이션 공통 에러 코드.
+ * 각 상수는 HTTP 상태(status)와 사용자에게 노출할 기본 메시지(message)를 함께 보유한다.
+ */
+@Getter
+@RequiredArgsConstructor
+public enum ErrorCode {
+
+    INVALID_INPUT(HttpStatus.BAD_REQUEST, "요청 값이 올바르지 않습니다."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
+
+    private final HttpStatus status;
+
+    // 클라이언트에 노출할 기본 메시지. CustomException 에서 override 하지 않으면 이 값이 사용된다.
+    private final String message;
+}
