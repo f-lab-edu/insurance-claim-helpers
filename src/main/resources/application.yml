@@ -26,3 +26,12 @@ spring:
         dimensions: 1536
         index-type: hnsw
         distance-type: cosine_distance
+
+# AWS S3 (개발 환경은 LocalStack). 실제 AWS 전환 시 endpoint 제거/변경
+aws:
+  s3:
+    endpoint: http://localhost:4566        # LocalStack S3 엔드포인트
+    region: ap-northeast-2
+    bucket: insurance-policies             # docker/localstack/init-s3.sh 의 버킷과 일치
+    access-key: test                       # LocalStack 은 임의 값 허용
+    secret-key: test
