@@ -22,6 +22,8 @@ repositories {
 dependencyManagement {
     imports {
         mavenBom "org.springframework.ai:spring-ai-bom:1.0.0"
+        // AWS SDK v2 모듈 간 버전 정합성 보장 (s3 등 개별 모듈 버전 미지정)
+        mavenBom "software.amazon.awssdk:bom:2.46.6"
     }
 }
 
@@ -38,6 +40,9 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
+
+    // AWS S3: 약관 PDF를 LocalStack/S3 에 저장. 버전은 위 awssdk BOM 이 관리
+    implementation 'software.amazon.awssdk:s3'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'
