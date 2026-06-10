@@ -1,0 +1,17 @@
+:root {
+  --color-primary: #2563eb;
+  --color-text: #1f2937;
+  --color-bg: #ffffff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+}
