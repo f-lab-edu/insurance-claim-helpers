@@ -45,10 +45,13 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
 
-    // 보안: Security(필터 체인 본체), OAuth2 Client(구글 로그인 위임), Spring Session(세션 저장소 추상화)
+    // 보안: Security(필터 체인 본체), OAuth2 Client(구글 로그인 위임)
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-    implementation 'org.springframework.session:spring-session-core'
+    // 세션 저장소: JDBC 구현체. classpath에 JdbcIndexedSessionRepository가 있으면
+    // Spring Boot가 세션 저장소를 DB로 자동 구성한다(별도 @Enable 설정 불필요).
+    // 다중 서버에서 세션 공유 가능, 서버 재시작에도 세션 유지.
+    implementation 'org.springframework.session:spring-session-jdbc'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'
