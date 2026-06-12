@@ -22,6 +22,8 @@ repositories {
 dependencyManagement {
     imports {
         mavenBom "org.springframework.ai:spring-ai-bom:1.0.0"
+        // AWS SDK v2 모듈 간 버전 정합성 보장 (s3 등 개별 모듈 버전 미지정)
+        mavenBom "software.amazon.awssdk:bom:2.46.6"
     }
 }
 
@@ -45,6 +47,9 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
 
+    // AWS S3: 약관 PDF를 LocalStack/S3 에 저장. 버전은 위 awssdk BOM 이 관리
+    implementation 'software.amazon.awssdk:s3'
+
     // 보안: Security(필터 체인 본체), OAuth2 Client(구글 로그인 위임)
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
@@ -62,6 +67,11 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // Testcontainers: S3 통합 테스트가 LocalStack 컨테이너를 직접 기동/종료.
+    // 버전은 Spring Boot BOM이 testcontainers-bom 으로 관리(개별 지정 불필요).
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:localstack'
 
     // Mockito 에이전트 jar만 따로 확보 (버전은 Spring Boot BOM이 관리, 의존성은 전이 안 함)
     mockitoAgent('org.mockito:mockito-core') { transitive = false }

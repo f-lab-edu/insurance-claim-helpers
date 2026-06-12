@@ -39,3 +39,9 @@ spring:
         dimensions: 1536
         index-type: hnsw
         distance-type: cosine_distance
+
+# 오브젝트 스토리지(S3 호환). 환경 공통값만 — endpoint/자격증명은 프로필별(application-{profile}.yml)에 둔다
+aws:
+  s3:
+    region: ap-northeast-2
+    bucket: insurance-policies             # docker/localstack/init-s3.sh 의 버킷과 일치
