@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY}
+
+# 운영 오브젝트 스토리지: OCI Object Storage(S3 호환 API). region/bucket 은 공통 application.yml 사용.
+# 실제 값은 OCI 전환 이슈에서 환경변수로 주입(엔드포인트/Customer Secret Key).
+aws:
+  s3:
+    endpoint: ${OCI_S3_ENDPOINT}        # OCI 네임스페이스 S3 호환 엔드포인트
+    access-key: ${OCI_S3_ACCESS_KEY}    # OCI Customer Secret Key - Access Key
+    secret-key: ${OCI_S3_SECRET_KEY}    # OCI Customer Secret Key - Secret

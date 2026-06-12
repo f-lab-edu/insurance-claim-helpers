@@ -1,15 +1,17 @@
 package com.swk.claimhelpers.common.storage;
 
+import com.swk.claimhelpers.common.config.AwsS3Properties;
 import com.swk.claimhelpers.common.exception.CustomException;
 import com.swk.claimhelpers.common.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+
+import java.io.InputStream;
 
 /**
  * 약관 PDF 를 S3(개발 환경 LocalStack)에 저장/삭제하는 순수 스토리지 모듈.
@@ -21,19 +23,20 @@ public class S3FileStorage {
     private final S3Client s3Client;
     private final String bucket;
 
-    public S3FileStorage(S3Client s3Client, @Value("${aws.s3.bucket}") String bucket) {
+    public S3FileStorage(S3Client s3Client, AwsS3Properties props) {
         this.s3Client = s3Client;
-        this.bucket = bucket;
+        this.bucket = props.bucket();
     }
-    
-    public void upload(String objectKey, byte[] content, String contentType) {
+
+    public void upload(String objectKey, InputStream inputStream, long contentLength, String contentType) {
         try {
             PutObjectRequest request = PutObjectRequest.builder()
                     .bucket(bucket)
                     .key(objectKey)
                     .contentType(contentType)
                     .build();
-            s3Client.putObject(request, RequestBody.fromBytes(content));
+            // SDK 가 미리 길이를 알아야 Content-Length 를 세팅하므로 contentLength 를 함께 받는다.
+            s3Client.putObject(request, RequestBody.fromInputStream(inputStream, contentLength));
         } catch (SdkException e) {
             log.error("S3 업로드 실패: key={}", objectKey, e);
             throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED, e);

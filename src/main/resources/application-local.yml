@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:insurance_claim_helpers}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:CHANGE_ME}
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:CHANGE_ME}
+
+# 로컬 오브젝트 스토리지: LocalStack. 자격증명은 임의 값 허용(test/test)
+aws:
+  s3:
+    endpoint: http://localhost:4566        # LocalStack S3 엔드포인트
+    access-key: test
+    secret-key: test

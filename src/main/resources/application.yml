@@ -1,8 +1,8 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:insurance_claim_helpers}
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:postgres}
+  # 기본 활성 프로필: 로컬. 운영 배포 시 SPRING_PROFILES_ACTIVE=prod 환경변수로 덮어쓴다.
+  # (테스트도 이 기본값을 따라 application-local.yml의 datasource를 사용한다.)
+  profiles:
+    active: local
 
   jpa:
     hibernate:
@@ -12,26 +12,36 @@ spring:
   flyway:
     enabled: true
 
+  # 세션 저장소를 DB(JDBC)로 사용. 스키마는 Flyway(V9)가 관리하므로 자동 생성은 끈다.
+  session:
+    jdbc:
+      initialize-schema: never
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:                                    # registrationId = "google"
+            scope:                                    # 구글에 요청할 정보 범위
+              - openid                                #   신원 토큰(id_token) → OIDC
+              - email                                 #   이메일
+              - profile                               #   이름 등 프로필
+            redirect-uri: "{baseUrl}/auth/google/callback"  # 콜백 경로(커스텀)
+
   ai:
     openai:
-      api-key: CHANGE_ME
       embedding:
         options:
           # text-embedding-ada-002: 1536차원
           model: text-embedding-ada-002
-    anthropic:
-      api-key: CHANGE_ME
     vectorstore:
       pgvector:
         dimensions: 1536
         index-type: hnsw
         distance-type: cosine_distance
 
-# AWS S3 (개발 환경은 LocalStack). 실제 AWS 전환 시 endpoint 제거/변경
+# 오브젝트 스토리지(S3 호환). 환경 공통값만 — endpoint/자격증명은 프로필별(application-{profile}.yml)에 둔다
 aws:
   s3:
-    endpoint: http://localhost:4566        # LocalStack S3 엔드포인트
     region: ap-northeast-2
     bucket: insurance-policies             # docker/localstack/init-s3.sh 의 버킷과 일치
-    access-key: test                       # LocalStack 은 임의 값 허용
-    secret-key: test

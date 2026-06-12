@@ -27,6 +27,12 @@ dependencyManagement {
     }
 }
 
+// Mockito를 Java 에이전트로 명시 등록하기 위한 전용 설정.
+// (JDK 21+ 에서 Mockito가 실행 중 self-attach 하는 방식이 경고/미래 금지 대상이라, 빌드에서 미리 붙여준다)
+configurations {
+    mockitoAgent
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
@@ -44,6 +50,14 @@ dependencies {
     // AWS S3: 약관 PDF를 LocalStack/S3 에 저장. 버전은 위 awssdk BOM 이 관리
     implementation 'software.amazon.awssdk:s3'
 
+    // 보안: Security(필터 체인 본체), OAuth2 Client(구글 로그인 위임)
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    // 세션 저장소: JDBC 구현체. classpath에 JdbcIndexedSessionRepository가 있으면
+    // Spring Boot가 세션 저장소를 DB로 자동 구성한다(별도 @Enable 설정 불필요).
+    // 다중 서버에서 세션 공유 가능, 서버 재시작에도 세션 유지.
+    implementation 'org.springframework.session:spring-session-jdbc'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
@@ -53,8 +67,18 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // Testcontainers: S3 통합 테스트가 LocalStack 컨테이너를 직접 기동/종료.
+    // 버전은 Spring Boot BOM이 testcontainers-bom 으로 관리(개별 지정 불필요).
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:localstack'
+
+    // Mockito 에이전트 jar만 따로 확보 (버전은 Spring Boot BOM이 관리, 의존성은 전이 안 함)
+    mockitoAgent('org.mockito:mockito-core') { transitive = false }
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+    // Mockito를 -javaagent로 명시 등록 → 실행 중 self-attach 경고 제거
+    jvmArgs("-javaagent:${configurations.mockitoAgent.asPath}")
 }
