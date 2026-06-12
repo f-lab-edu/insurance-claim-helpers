@@ -1,5 +1,6 @@
 package com.swk.claimhelpers.user.service;
 
+import com.swk.claimhelpers.support.AbstractPostgresContainerTest;
 import com.swk.claimhelpers.user.entity.User;
 import com.swk.claimhelpers.user.repository.UserOauthAccountRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -13,14 +14,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * OAuthUserService 통합 테스트 (실제 PostgreSQL 사용).
- * 
+ *
  * 동작 전제:
- * - 로컬 docker postgres(insurance-postgres)가 떠 있어야 한다.
+ * - {@link AbstractPostgresContainerTest} 가 pgvector PostgreSQL 컨테이너를 자가 기동한다(Docker 필요).
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(OAuthUserService.class)
-class OAuthUserServiceIntegrationTest {
+class OAuthUserServiceIntegrationTest extends AbstractPostgresContainerTest {
 
     @Autowired
     private OAuthUserService oauthUserService;
