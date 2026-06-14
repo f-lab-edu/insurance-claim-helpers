@@ -72,6 +72,7 @@ dependencies {
     // 버전은 Spring Boot BOM이 testcontainers-bom 으로 관리(개별 지정 불필요).
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:localstack'
+    testImplementation 'org.testcontainers:postgresql'
 
     // Mockito 에이전트 jar만 따로 확보 (버전은 Spring Boot BOM이 관리, 의존성은 전이 안 함)
     mockitoAgent('org.mockito:mockito-core') { transitive = false }
