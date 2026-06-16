@@ -47,6 +47,10 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
 
+    // PDF 텍스트 추출(PDFBox 기반).
+    // TokenTextSplitter 는 spring-ai-core 전이 의존이라 별도 추가 불필요.
+    implementation 'org.springframework.ai:spring-ai-pdf-document-reader'
+
     // AWS S3: 약관 PDF를 LocalStack/S3 에 저장. 버전은 위 awssdk BOM 이 관리
     implementation 'software.amazon.awssdk:s3'
 

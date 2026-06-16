@@ -9,6 +9,7 @@ import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.InputStream;
@@ -40,6 +41,25 @@ public class S3FileStorage {
         } catch (SdkException e) {
             log.error("S3 업로드 실패: key={}", objectKey, e);
             throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED, e);
+        }
+    }
+
+    /**
+     * 오브젝트를 통째로 읽어 byte[] 로 반환한다.
+     *
+     * PDFBox 가 PDF 를 random access 로 읽으므로
+     * byte[]로 반환해야 한다.
+     */
+    public byte[] download(String objectKey) {
+        try {
+            GetObjectRequest request = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(objectKey)
+                    .build();
+            return s3Client.getObjectAsBytes(request).asByteArray();
+        } catch (SdkException e) {
+            log.error("S3 다운로드 실패: key={}", objectKey, e);
+            throw new CustomException(ErrorCode.FILE_DOWNLOAD_FAILED, e);
         }
     }
 
