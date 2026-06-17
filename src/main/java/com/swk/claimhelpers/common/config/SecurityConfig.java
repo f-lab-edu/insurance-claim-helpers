@@ -15,7 +15,8 @@ public class SecurityConfig {
     
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   CustomOidcUserService customOidcUserService) throws Exception {
+                                                   CustomOidcUserService customOidcUserService,
+                                                   RestAuthenticationEntryPoint authenticationEntryPoint) throws Exception {
         http
                 // (1) URL별 접근 권한: 로그인 필수 vs 공개
                 .authorizeHttpRequests(auth -> auth
@@ -26,6 +27,7 @@ public class SecurityConfig {
                         // 나머지는 모두 공개 — 비로그인 사용자도 업로드/채팅 등 핵심 기능을 써야 한다.
                         .anyRequest().permitAll()
                 )
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint))
                 // (2) 구글 OAuth2 로그인 활성화 + 커스텀 URL 연결
                 .oauth2Login(oauth -> oauth
                         // (기본값 /oauth2/authorization 를 /auth 로 교체)
