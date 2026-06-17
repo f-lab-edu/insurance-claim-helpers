@@ -24,3 +24,7 @@ aws:
     endpoint: http://localhost:4566        # LocalStack S3 엔드포인트
     access-key: test
     secret-key: test
+
+# OAuth 로그인 성공 후 복귀 주소
+app:
+  frontend-url: http://localhost:5173/

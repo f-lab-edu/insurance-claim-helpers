@@ -2,6 +2,7 @@ package com.swk.claimhelpers.common.config;
 
 import com.swk.claimhelpers.user.service.CustomOidcUserService;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,7 +16,8 @@ public class SecurityConfig {
     
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   CustomOidcUserService customOidcUserService) throws Exception {
+                                                   CustomOidcUserService customOidcUserService,
+                                                   @Value("${app.frontend-url}") String frontendUrl) throws Exception {
         http
                 // (1) URL별 접근 권한: 로그인 필수 vs 공개
                 .authorizeHttpRequests(auth -> auth
@@ -33,6 +35,8 @@ public class SecurityConfig {
                         .redirectionEndpoint(endpoint -> endpoint.baseUri("/auth/google/callback"))
                         // 사용자 정보 로드 시 우리 커스텀 서비스로 회원 find-or-create 수행
                         .userInfoEndpoint(userInfo -> userInfo.oidcUserService(customOidcUserService))
+                        // 로그인 성공 후 프론트(SPA)로 복귀
+                        .defaultSuccessUrl(frontendUrl, true)
                 )
                 // (3) 로그아웃: POST /auth/logout 요청 시 세션을 무효화하고 204(No Content) 반환
                 .logout(logout -> logout
