@@ -7,12 +7,26 @@
   padding: 96px 24px;
 }
 
+.shield {
+  color: var(--color-primary);
+}
+
 .title {
   font-size: 24px;
   font-weight: 700;
 }
 
+.subtitle {
+  font-size: 16px;
+  color: #6b7280;
+}
+
 .googleButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 320px;
   padding: 14px 32px;
   font-size: 16px;
   font-weight: 600;

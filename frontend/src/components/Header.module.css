@@ -7,17 +7,55 @@
 }
 
 .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 18px;
   font-weight: 700;
   color: var(--color-text);
   text-decoration: none;
 }
 
+.logoIcon {
+  color: var(--color-primary);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.account {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.email {
+  font-size: 14px;
+  color: #374151;
+}
+
 .action {
   font-size: 14px;
-  color: var(--color-primary);
+  color: var(--color-text);
   background: none;
-  border: none;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 16px;
   cursor: pointer;
   text-decoration: none;
 }
