@@ -6,11 +6,6 @@ import com.swk.claimhelpers.policy.entity.ClaimCriteriaStatus;
 import com.swk.claimhelpers.policy.entity.Document;
 import com.swk.claimhelpers.policy.repository.ClaimCriteriaRepository;
 import com.swk.claimhelpers.policy.repository.DocumentRepository;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,8 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.document.DocumentTransformer;
 import org.springframework.ai.vectorstore.VectorStore;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,16 +36,14 @@ class ClaimCriteriaProcessorTest {
 
     @Mock
     private DocumentRepository documentRepository;
-
     @Mock
     private ClaimCriteriaRepository claimCriteriaRepository;
-
     @Mock
     private S3FileStorage s3FileStorage;
-
+    @Mock
+    private PdfMarkdownExtractor pdfMarkdownExtractor;
     @Mock
     private DocumentTransformer chunkingPipeline;
-
     @Mock
     private VectorStore vectorStore;
 
@@ -59,14 +52,16 @@ class ClaimCriteriaProcessorTest {
 
     @Test
     @DisplayName("정상 처리: 청크에 claim_criteria_id 주입 + vectorStore.add 호출 + 상태 COMPLETED")
-    void 정상_처리() throws IOException {
+    void 정상_처리() {
         ClaimCriteria claimCriteria = ClaimCriteria.createForSession("session-1");
         Document documentEntity = Document.create(claimCriteria, "약관.pdf", 100L);
         documentEntity.updateObjectKey(OBJECT_KEY);
         given(documentRepository.findByClaimCriteriaId(CLAIM_CRITERIA_ID)).willReturn(Optional.of(documentEntity));
-        given(s3FileStorage.download(OBJECT_KEY)).willReturn(minimalPdfBytes());
 
-        // 실제 PagePdfDocumentReader 추출 결과는 mock 파이프라인이 받아 우리가 만든 청크로 치환한다.
+        // extractor 가 .md 로부터 읽은 Document 를 반환했다고 가정
+        org.springframework.ai.document.Document raw = new org.springframework.ai.document.Document("제1조 ...");
+        given(pdfMarkdownExtractor.extract(any(Path.class), any(Path.class))).willReturn(List.of(raw));
+
         org.springframework.ai.document.Document chunk = new org.springframework.ai.document.Document("제1조 ...");
         given(chunkingPipeline.apply(anyList())).willReturn(List.of(chunk));
         given(claimCriteriaRepository.findById(CLAIM_CRITERIA_ID)).willReturn(Optional.of(claimCriteria));
@@ -89,31 +84,13 @@ class ClaimCriteriaProcessorTest {
         Document documentEntity = Document.create(claimCriteria, "약관.pdf", 100L);
         documentEntity.updateObjectKey(OBJECT_KEY);
         given(documentRepository.findByClaimCriteriaId(CLAIM_CRITERIA_ID)).willReturn(Optional.of(documentEntity));
-        // S3 다운로드 단계에서 실패하도록 스텁
-        given(s3FileStorage.download(OBJECT_KEY)).willThrow(new RuntimeException("download failed"));
+        willThrow(new RuntimeException("download failed"))
+                .given(s3FileStorage).downloadToFile(any(), any());
         given(claimCriteriaRepository.findById(CLAIM_CRITERIA_ID)).willReturn(Optional.of(claimCriteria));
 
         processor.process(CLAIM_CRITERIA_ID);
 
         assertThat(claimCriteria.getStatus()).isEqualTo(ClaimCriteriaStatus.FAILED);
         then(vectorStore).should(never()).add(any());
-    }
-
-    // PagePdfDocumentReader 가 파싱할 수 있는 최소 PDF(텍스트 1줄, 1페이지)를 메모리에서 생성
-    private byte[] minimalPdfBytes() throws IOException {
-        try (PDDocument doc = new PDDocument()) {
-            PDPage page = new PDPage();
-            doc.addPage(page);
-            try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
-                cs.beginText();
-                cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12);
-                cs.newLineAtOffset(100, 700);
-                cs.showText("clause text");
-                cs.endText();
-            }
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            doc.save(out);
-            return out.toByteArray();
-        }
     }
 }

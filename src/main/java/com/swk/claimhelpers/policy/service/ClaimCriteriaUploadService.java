@@ -18,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.UUID;
 
 
 @Service
@@ -34,6 +33,7 @@ public class ClaimCriteriaUploadService {
     private final DocumentRepository documentRepository;
     private final S3FileStorage s3FileStorage;
     private final MultipartProperties multipartProperties;
+    private final ObjectKeyGenerator objectKeyGenerator;
 
     /**
      * @param user       로그인 사용자(없으면 null)
@@ -53,7 +53,7 @@ public class ClaimCriteriaUploadService {
         Document document = Document.create(claimCriteria, file.getOriginalFilename(), file.getSize());
         documentRepository.save(document);
 
-        String objectKey = "claim-criteria/" + claimCriteria.getId() + "/" + UUID.randomUUID() + ".pdf";
+        String objectKey = objectKeyGenerator.generate(claimCriteria.getId());
         s3FileStorage.upload(objectKey, openStream(file), file.getSize(), PDF_CONTENT_TYPE);
 
         document.updateObjectKey(objectKey);

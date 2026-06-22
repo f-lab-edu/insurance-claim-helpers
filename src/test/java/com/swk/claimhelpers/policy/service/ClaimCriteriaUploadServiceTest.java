@@ -48,6 +48,9 @@ class ClaimCriteriaUploadServiceTest {
     @Mock
     private MultipartProperties multipartProperties;
 
+    @Mock
+    private ObjectKeyGenerator objectKeyGenerator;
+
     @InjectMocks
     private ClaimCriteriaUploadService uploadService;
 
@@ -102,6 +105,7 @@ class ClaimCriteriaUploadServiceTest {
         given(file.getOriginalFilename()).willReturn("약관.pdf");
         InputStream stream = new ByteArrayInputStream(new byte[]{1, 2, 3});
         given(file.getInputStream()).willReturn(stream);
+        given(objectKeyGenerator.generate(any())).willReturn("claim-criteria/1/key.pdf");
 
         Document document = uploadService.upload(file, null, "session-1");
 

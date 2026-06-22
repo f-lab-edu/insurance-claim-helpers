@@ -55,5 +55,5 @@ aws:
 # 약관 임베딩 비동기 처리 전용 스레드풀.
 embedding:
   executor:
-    max-concurrent: 20
-    queue-capacity: 50
+    max-concurrent: 5
+    queue-capacity: 20
