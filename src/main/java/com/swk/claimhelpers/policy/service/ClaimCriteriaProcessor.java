@@ -46,7 +46,6 @@ public class ClaimCriteriaProcessor {
                     documentRepository.findByClaimCriteriaId(claimCriteriaId)
                             .orElseThrow(() -> new CustomException(ErrorCode.INTERNAL_ERROR));
             
-            // {tmp}/claim-criteria-{id}-{random}/
             workDir = Files.createTempDirectory("claim-criteria-" + claimCriteriaId + "-");
 
             Path pdfFile = workDir.resolve("input.pdf");
@@ -58,6 +57,14 @@ public class ClaimCriteriaProcessor {
 
             List<Document> chunks = chunkingPipeline.apply(documents);
             chunks.forEach(chunk -> chunk.getMetadata().put(METADATA_CLAIM_CRITERIA_ID, claimCriteriaId));
+
+            if(log.isTraceEnabled()) {
+                for(int i = 0; i < chunks.size(); i++) {
+                    String text = chunks.get(i).getText();
+                    log.trace("청크[{}/{}] len={}, content={}",
+                            i + 1, chunks.size(), text == null ? 0 : text.length(), text);
+                }
+            }
 
             long startedAt = System.currentTimeMillis();
             log.info("임베딩 시작: claimCriteriaId={}, 청크={}개", claimCriteriaId, chunks.size());

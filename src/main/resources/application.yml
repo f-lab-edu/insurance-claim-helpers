@@ -57,3 +57,8 @@ embedding:
   executor:
     max-concurrent: 5
     queue-capacity: 20
+
+
+#logging:
+#  level:
+#    com.swk.claimhelpers.policy.service.ClaimCriteriaProcessor: TRACE

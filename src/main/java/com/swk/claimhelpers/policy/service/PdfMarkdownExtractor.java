@@ -31,6 +31,7 @@ public class PdfMarkdownExtractor {
             config.setGenerateMarkdown(true);
             config.setGeneratePDF(false);
             config.setGenerateHtml(false);
+            config.setGenerateJSON(false);
 
             OpenDataLoaderPDF.processFile(pdfFile.toString(), config);
 

@@ -1,6 +1,5 @@
 package com.swk.claimhelpers.policy.config;
 
-import com.swk.claimhelpers.policy.service.TextNormalizer;
 import org.springframework.ai.document.DocumentTransformer;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.context.annotation.Bean;
@@ -14,9 +13,12 @@ public class ChunkingConfig {
 
     @Bean
     public DocumentTransformer chunkingPipeline() {
-        TextNormalizer normalizer = new TextNormalizer();
-        TokenTextSplitter tokenSplitter = new TokenTextSplitter();
-        return documents -> tokenSplitter.apply(normalizer.apply(documents));
+        return new TokenTextSplitter();
+
+        // md 전환으로 비활성화
+        // TextNormalizer normalizer = new TextNormalizer();
+        // TokenTextSplitter tokenSplitter = new TokenTextSplitter();
+        // return documents -> tokenSplitter.apply(normalizer.apply(documents));
 
         // [개선 예정] 조(條) 단위 분할 합성 — 과분할 이슈 해결 후 재활성화
         // ClauseSplitter clauseSplitter = new ClauseSplitter();
