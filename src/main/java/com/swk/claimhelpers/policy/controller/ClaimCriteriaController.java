@@ -3,11 +3,14 @@ package com.swk.claimhelpers.policy.controller;
 import com.swk.claimhelpers.common.exception.CustomException;
 import com.swk.claimhelpers.common.exception.ErrorCode;
 import com.swk.claimhelpers.common.util.SessionKeyResolver;
+import com.swk.claimhelpers.policy.dto.ClaimCriteriaListResponse;
+import com.swk.claimhelpers.policy.dto.ClaimCriteriaStatusResponse;
 import com.swk.claimhelpers.policy.dto.ClaimCriteriaUploadResponse;
 import com.swk.claimhelpers.policy.entity.ClaimCriteria;
 import com.swk.claimhelpers.policy.entity.ClaimCriteriaStatus;
 import com.swk.claimhelpers.policy.entity.Document;
 import com.swk.claimhelpers.policy.service.ClaimCriteriaProcessor;
+import com.swk.claimhelpers.policy.service.ClaimCriteriaService;
 import com.swk.claimhelpers.policy.service.ClaimCriteriaUploadService;
 import com.swk.claimhelpers.user.entity.User;
 import com.swk.claimhelpers.user.repository.UserRepository;
@@ -20,11 +23,16 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -34,6 +42,7 @@ public class ClaimCriteriaController {
 
     private final ClaimCriteriaUploadService uploadService;
     private final ClaimCriteriaProcessor processor;
+    private final ClaimCriteriaService claimCriteriaService;
     private final UserRepository userRepository;
     private final SessionKeyResolver sessionKeyResolver;
 
@@ -75,5 +84,52 @@ public class ClaimCriteriaController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ClaimCriteriaUploadResponse.from(claimCriteria, document));
+    }
+    
+    @GetMapping("/{id}/status")
+    public ClaimCriteriaStatusResponse status(
+            @PathVariable Long id,
+            @AuthenticationPrincipal OidcUser principal,
+            HttpServletRequest request) {
+
+        Owner owner = resolveOwner(principal, request);
+        ClaimCriteria claimCriteria = claimCriteriaService.findOwned(id, owner.user(), owner.sessionKey());
+        return ClaimCriteriaStatusResponse.from(claimCriteria);
+    }
+    
+    @GetMapping
+    public List<ClaimCriteriaListResponse> list(@AuthenticationPrincipal OidcUser principal) {
+        if (principal == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+        User user = userRepository.findByEmail(principal.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.INTERNAL_ERROR));
+
+        return claimCriteriaService.findCompletedByUserId(user.getId()).stream()
+                .map(ClaimCriteriaListResponse::from)
+                .toList();
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal OidcUser principal,
+            HttpServletRequest request) {
+
+        Owner owner = resolveOwner(principal, request);
+        claimCriteriaService.delete(id, owner.user(), owner.sessionKey());
+        return ResponseEntity.noContent().build();
+    }
+
+    private Owner resolveOwner(OidcUser principal, HttpServletRequest request) {
+        if (principal != null) {
+            User user = userRepository.findByEmail(principal.getEmail())
+                    .orElseThrow(() -> new CustomException(ErrorCode.INTERNAL_ERROR));
+            return new Owner(user, null);
+        }
+        return new Owner(null, sessionKeyResolver.resolve(request));
+    }
+
+    private record Owner(User user, String sessionKey) {
     }
 }

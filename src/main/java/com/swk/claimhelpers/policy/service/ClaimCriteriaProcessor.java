@@ -29,8 +29,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ClaimCriteriaProcessor {
 
-    private static final String METADATA_CLAIM_CRITERIA_ID = "claim_criteria_id";
-
     private final DocumentRepository documentRepository;
     private final ClaimCriteriaRepository claimCriteriaRepository;
     private final S3FileStorage s3FileStorage;
@@ -56,7 +54,7 @@ public class ClaimCriteriaProcessor {
             List<Document> documents = pdfMarkdownExtractor.extract(pdfFile, outputDir);
 
             List<Document> chunks = chunkingPipeline.apply(documents);
-            chunks.forEach(chunk -> chunk.getMetadata().put(METADATA_CLAIM_CRITERIA_ID, claimCriteriaId));
+            chunks.forEach(chunk -> chunk.getMetadata().put(ClaimCriteriaVectorMetadata.CLAIM_CRITERIA_ID, claimCriteriaId));
 
             if(log.isTraceEnabled()) {
                 for(int i = 0; i < chunks.size(); i++) {

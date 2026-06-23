@@ -65,9 +65,6 @@ public class S3FileStorage {
         }
     }
 
-    /**
-     * claim_criteria 삭제 시 #15 에서 호출한다.
-     */
     public void delete(String objectKey) {
         try {
             DeleteObjectRequest request = DeleteObjectRequest.builder()

@@ -17,6 +17,9 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
 
+    // 약관(claim_criteria) 조회/삭제 에러
+    CLAIM_CRITERIA_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 약관을 찾을 수 없습니다."),
+
     // 파일 업로드 요청 검증 에러
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "PDF 파일만 업로드할 수 있습니다."),
     FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "파일 크기 제한을 초과했습니다."),
