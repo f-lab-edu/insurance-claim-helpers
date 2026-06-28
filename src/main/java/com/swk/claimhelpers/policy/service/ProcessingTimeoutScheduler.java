@@ -3,6 +3,7 @@ package com.swk.claimhelpers.policy.service;
 import com.swk.claimhelpers.policy.repository.ClaimCriteriaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ public class ProcessingTimeoutScheduler {
 
     // 매일 새벽 4시 1회 실행
     @Scheduled(cron = "0 0 4 * * *")
+    @SchedulerLock(name = "failTimedOutProcessing", lockAtMostFor = "10m", lockAtLeastFor = "1m")
     @Transactional
     public void failTimedOutProcessing() {
         LocalDateTime now = LocalDateTime.now();
