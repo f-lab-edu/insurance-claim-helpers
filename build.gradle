@@ -16,6 +16,11 @@ java {
 
 repositories {
     mavenCentral()
+    
+    // opendataloader-pdf-core 의 전이 의존성인 veraPDF 용도
+    maven {
+        url = uri("https://artifactory.openpreservation.org/artifactory/vera-dev")
+    }
 }
 
 // Spring AI 버전을 BOM으로 일괄 관리
@@ -46,6 +51,9 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
+
+    implementation 'org.opendataloader:opendataloader-pdf-core:2.4.7'
+    implementation 'org.springframework.ai:spring-ai-markdown-document-reader'
 
     // AWS S3: 약관 PDF를 LocalStack/S3 에 저장. 버전은 위 awssdk BOM 이 관리
     implementation 'software.amazon.awssdk:s3'

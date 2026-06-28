@@ -7,11 +7,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * 약관 PDF 를 S3(개발 환경 LocalStack)에 저장/삭제하는 순수 스토리지 모듈.
@@ -40,6 +45,23 @@ public class S3FileStorage {
         } catch (SdkException e) {
             log.error("S3 업로드 실패: key={}", objectKey, e);
             throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED, e);
+        }
+    }
+    
+    public void downloadToFile(String objectKey, Path target) {
+        try {
+            Files.deleteIfExists(target);
+            GetObjectRequest request = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(objectKey)
+                    .build();
+            s3Client.getObject(request, ResponseTransformer.toFile(target));
+        } catch (IOException e) {
+            log.error("S3 다운로드 대상 파일 정리 실패: target={}", target, e);
+            throw new CustomException(ErrorCode.FILE_DOWNLOAD_FAILED, e);
+        } catch (SdkException e) {
+            log.error("S3 다운로드 실패: key={}", objectKey, e);
+            throw new CustomException(ErrorCode.FILE_DOWNLOAD_FAILED, e);
         }
     }
 

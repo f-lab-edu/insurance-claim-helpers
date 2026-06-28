@@ -20,6 +20,8 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -84,5 +86,25 @@ class S3FileStorageTest {
         assertThatThrownBy(() -> s3Client.headObject(
                 HeadObjectRequest.builder().bucket(BUCKET).key(objectKey).build()))
                 .isInstanceOf(NoSuchKeyException.class);
+    }
+
+    @Test
+    @DisplayName("downloadToFile 은 S3 객체를 로컬 파일로 그대로 저장한다(기존 파일은 교체)")
+    void downloadToFile_저장() throws Exception {
+        // given: 업로드해 둔 객체
+        String objectKey = "test/" + UUID.randomUUID() + ".pdf";
+        byte[] content = "stream-download-content".getBytes(StandardCharsets.UTF_8);
+        s3FileStorage.upload(objectKey, new ByteArrayInputStream(content), content.length, "application/pdf");
+
+        // when: 파일 경로로 다운로드
+        Path target = Files.createTempFile("s3-download-", ".pdf");
+        try {
+            s3FileStorage.downloadToFile(objectKey, target);
+
+            // then: 파일 내용이 업로드 내용과 동일
+            assertThat(Files.readAllBytes(target)).isEqualTo(content);
+        } finally {
+            Files.deleteIfExists(target);
+        }
     }
 }
