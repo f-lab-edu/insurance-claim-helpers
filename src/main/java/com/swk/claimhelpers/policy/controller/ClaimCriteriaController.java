@@ -13,7 +13,7 @@ import com.swk.claimhelpers.policy.service.ClaimCriteriaProcessor;
 import com.swk.claimhelpers.policy.service.ClaimCriteriaService;
 import com.swk.claimhelpers.policy.service.ClaimCriteriaUploadService;
 import com.swk.claimhelpers.user.entity.User;
-import com.swk.claimhelpers.user.repository.UserRepository;
+import com.swk.claimhelpers.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +43,7 @@ public class ClaimCriteriaController {
     private final ClaimCriteriaUploadService uploadService;
     private final ClaimCriteriaProcessor processor;
     private final ClaimCriteriaService claimCriteriaService;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final SessionKeyResolver sessionKeyResolver;
 
     /**
@@ -62,8 +62,7 @@ public class ClaimCriteriaController {
         User user = null;
         String sessionKey = null;
         if (principal != null) {
-            user = userRepository.findByEmail(principal.getEmail())
-                    .orElseThrow(() -> new CustomException(ErrorCode.INTERNAL_ERROR));
+            user = userService.getByEmail(principal.getEmail());
         } else {
             sessionKey = sessionKeyResolver.resolve(request);
         }
@@ -102,8 +101,7 @@ public class ClaimCriteriaController {
         if (principal == null) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
-        User user = userRepository.findByEmail(principal.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.INTERNAL_ERROR));
+        User user = userService.getByEmail(principal.getEmail());
 
         return claimCriteriaService.findCompletedByUserId(user.getId()).stream()
                 .map(ClaimCriteriaListResponse::from)
@@ -123,8 +121,7 @@ public class ClaimCriteriaController {
 
     private Owner resolveOwner(OidcUser principal, HttpServletRequest request) {
         if (principal != null) {
-            User user = userRepository.findByEmail(principal.getEmail())
-                    .orElseThrow(() -> new CustomException(ErrorCode.INTERNAL_ERROR));
+            User user = userService.getByEmail(principal.getEmail());
             return new Owner(user, null);
         }
         return new Owner(null, sessionKeyResolver.resolve(request));

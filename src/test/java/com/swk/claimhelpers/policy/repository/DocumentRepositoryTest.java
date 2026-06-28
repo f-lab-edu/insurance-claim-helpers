@@ -57,4 +57,27 @@ class DocumentRepositoryTest extends AbstractPostgresContainerTest {
         assertThat(found.getFileSize()).isEqualTo(1000L);
         assertThat(found.getClaimCriteria().getStatus()).isEqualTo(ClaimCriteriaStatus.COMPLETED);
     }
+
+    @Test
+    @DisplayName("여러 약관 id로 문서를 일괄 조회하며 약관(status 포함)을 함께 로딩한다")
+    void 약관id_목록으로_문서_일괄조회() {
+        User user = userRepository.save(User.create("owner@gmail.com"));
+
+        Document doc1 = saveClaimWithDocument(user, ClaimCriteriaStatus.COMPLETED, "a.pdf", 100L);
+        Document doc2 = saveClaimWithDocument(user, ClaimCriteriaStatus.PROCESSING, "b.pdf", 200L);
+        saveClaimWithDocument(user, ClaimCriteriaStatus.COMPLETED, "c.pdf", 300L); // 조회 대상 아님
+
+        List<Long> ids = List.of(
+                doc1.getClaimCriteria().getId(),
+                doc2.getClaimCriteria().getId());
+
+        List<Document> result = documentRepository.findByClaimCriteriaIdIn(ids);
+
+        assertThat(result)
+                .extracting(Document::getFileName)
+                .containsExactlyInAnyOrder("a.pdf", "b.pdf");
+        assertThat(result)
+                .extracting(d -> d.getClaimCriteria().getStatus())
+                .containsExactlyInAnyOrder(ClaimCriteriaStatus.COMPLETED, ClaimCriteriaStatus.PROCESSING);
+    }
 }
