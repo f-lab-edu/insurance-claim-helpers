@@ -65,6 +65,9 @@ dependencies {
     // Spring Boot가 세션 저장소를 DB로 자동 구성한다(별도 @Enable 설정 불필요).
     // 다중 서버에서 세션 공유 가능, 서버 재시작에도 세션 유지.
     implementation 'org.springframework.session:spring-session-jdbc'
+    
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:7.7.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.7.0'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'
