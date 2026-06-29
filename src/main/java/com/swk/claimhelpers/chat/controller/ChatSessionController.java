@@ -3,6 +3,8 @@ package com.swk.claimhelpers.chat.controller;
 import com.swk.claimhelpers.chat.dto.ChatSessionCreateResponse;
 import com.swk.claimhelpers.chat.dto.ChatSessionDetailResponse;
 import com.swk.claimhelpers.chat.dto.ChatSessionListResponse;
+import com.swk.claimhelpers.chat.dto.ClaimCriteriaAttachRequest;
+import com.swk.claimhelpers.chat.dto.ClaimCriteriaAttachResponse;
 import com.swk.claimhelpers.chat.service.ChatSessionService;
 import com.swk.claimhelpers.common.exception.CustomException;
 import com.swk.claimhelpers.common.exception.ErrorCode;
@@ -14,10 +16,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -48,5 +53,23 @@ public class ChatSessionController {
     @GetMapping("/{sessionId}")
     public ChatSessionDetailResponse detail(@PathVariable Long sessionId, Owner owner) {
         return chatSessionService.findDetail(sessionId, owner.user(), owner.sessionKey());
+    }
+
+    @PostMapping("/{sessionId}/claim-criteria")
+    public ClaimCriteriaAttachResponse attachClaimCriteria(
+            @PathVariable Long sessionId,
+            @RequestBody ClaimCriteriaAttachRequest request,
+            Owner owner) {
+        return chatSessionService.attachClaimCriteria(
+                sessionId, request.claimCriteriaId(), owner.user(), owner.sessionKey());
+    }
+
+    @DeleteMapping("/{sessionId}/claim-criteria/{claimCriteriaId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void detachClaimCriteria(
+            @PathVariable Long sessionId,
+            @PathVariable Long claimCriteriaId,
+            Owner owner) {
+        chatSessionService.detachClaimCriteria(sessionId, claimCriteriaId, owner.user(), owner.sessionKey());
     }
 }
