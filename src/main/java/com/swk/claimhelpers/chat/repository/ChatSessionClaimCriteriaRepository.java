@@ -20,4 +20,10 @@ public interface ChatSessionClaimCriteriaRepository extends JpaRepository<ChatSe
     @Modifying
     @Query("DELETE FROM ChatSessionClaimCriteria c WHERE c.claimCriteria.id = :claimCriteriaId")
     void deleteByClaimCriteriaId(@Param("claimCriteriaId") Long claimCriteriaId);
+    
+    @Modifying
+    @Query("DELETE FROM ChatSessionClaimCriteria c "
+            + "WHERE c.chatSession.id = :chatSessionId AND c.claimCriteria.id = :claimCriteriaId")
+    void deleteByChatSessionIdAndClaimCriteriaId(@Param("chatSessionId") Long chatSessionId,
+                                                 @Param("claimCriteriaId") Long claimCriteriaId);
 }

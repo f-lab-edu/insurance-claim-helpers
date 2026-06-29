@@ -67,4 +67,39 @@ class ChatSessionClaimCriteriaRepositoryTest extends AbstractPostgresContainerTe
                 .extracting(l -> l.getClaimCriteria().getId())
                 .containsExactlyInAnyOrder(c1.getId(), c2.getId());
     }
+
+    @Test
+    @DisplayName("특정 세션-약관 링크만 삭제하고 같은 세션의 다른 약관 링크는 남긴다")
+    void 세션약관id로_단건_링크삭제() {
+        User user = em.persist(User.create("owner@gmail.com"));
+        ChatSession session = em.persist(ChatSession.createForUser(user));
+        ClaimCriteria target = em.persist(ClaimCriteria.createForUser(user));
+        ClaimCriteria other = em.persist(ClaimCriteria.createForUser(user));
+        em.persist(ChatSessionClaimCriteria.create(session, target));
+        em.persist(ChatSessionClaimCriteria.create(session, other));
+        em.flush();
+        em.clear();
+
+        repository.deleteByChatSessionIdAndClaimCriteriaId(session.getId(), target.getId());
+        em.clear();
+
+        List<ChatSessionClaimCriteria> remaining = repository.findByChatSessionId(session.getId());
+        assertThat(remaining).hasSize(1);
+        assertThat(remaining.get(0).getClaimCriteria().getId()).isEqualTo(other.getId());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 링크를 삭제해도 예외 없이 0건 처리한다(멱등)")
+    void 미존재_링크삭제_멱등() {
+        User user = em.persist(User.create("owner@gmail.com"));
+        ChatSession session = em.persist(ChatSession.createForUser(user));
+        ClaimCriteria criteria = em.persist(ClaimCriteria.createForUser(user));
+        em.flush();
+        em.clear();
+
+        repository.deleteByChatSessionIdAndClaimCriteriaId(session.getId(), criteria.getId());
+        em.clear();
+
+        assertThat(repository.findByChatSessionId(session.getId())).isEmpty();
+    }
 }
