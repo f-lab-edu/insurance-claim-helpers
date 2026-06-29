@@ -4,18 +4,23 @@ import com.swk.claimhelpers.chat.dto.ChatMessageResponse;
 import com.swk.claimhelpers.chat.dto.ChatSessionCreateResponse;
 import com.swk.claimhelpers.chat.dto.ChatSessionDetailResponse;
 import com.swk.claimhelpers.chat.dto.ChatSessionListResponse;
+import com.swk.claimhelpers.chat.dto.ClaimCriteriaAttachResponse;
 import com.swk.claimhelpers.chat.dto.ClaimCriteriaDetail;
 import com.swk.claimhelpers.chat.dto.ClaimCriteriaSummary;
 import com.swk.claimhelpers.chat.entity.ChatMessage;
 import com.swk.claimhelpers.chat.entity.ChatSession;
 import com.swk.claimhelpers.chat.entity.ChatSessionClaimCriteria;
+import com.swk.claimhelpers.chat.entity.ChatSessionClaimCriteriaId;
 import com.swk.claimhelpers.chat.repository.ChatMessageRepository;
 import com.swk.claimhelpers.chat.repository.ChatSessionClaimCriteriaRepository;
 import com.swk.claimhelpers.chat.repository.ChatSessionRepository;
 import com.swk.claimhelpers.common.exception.CustomException;
 import com.swk.claimhelpers.common.exception.ErrorCode;
+import com.swk.claimhelpers.policy.entity.ClaimCriteria;
+import com.swk.claimhelpers.policy.entity.ClaimCriteriaStatus;
 import com.swk.claimhelpers.policy.entity.Document;
 import com.swk.claimhelpers.policy.repository.DocumentRepository;
+import com.swk.claimhelpers.policy.service.ClaimCriteriaService;
 import com.swk.claimhelpers.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,6 +39,7 @@ public class ChatSessionService {
     private final ChatSessionClaimCriteriaRepository chatSessionClaimCriteriaRepository;
     private final DocumentRepository documentRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final ClaimCriteriaService claimCriteriaService;
 
     @Transactional
     public ChatSessionCreateResponse create(User user, String sessionKey) {
@@ -65,6 +71,35 @@ public class ChatSessionService {
         }
 
         return session;
+    }
+    
+    @Transactional
+    public ClaimCriteriaAttachResponse attachClaimCriteria(Long sessionId, Long claimCriteriaId,
+                                                           User user, String sessionKey) {
+        ChatSession session = findOwned(sessionId, user, sessionKey);
+        ClaimCriteria criteria = claimCriteriaService.findOwned(claimCriteriaId, user, sessionKey);
+
+        if (criteria.getStatus() != ClaimCriteriaStatus.COMPLETED) {
+            throw new CustomException(ErrorCode.CLAIM_CRITERIA_NOT_COMPLETED);
+        }
+
+        ChatSessionClaimCriteriaId linkId = ChatSessionClaimCriteriaId.of(sessionId, claimCriteriaId);
+        if (!chatSessionClaimCriteriaRepository.existsById(linkId)) {
+            chatSessionClaimCriteriaRepository.save(ChatSessionClaimCriteria.create(session, criteria));
+        }
+
+        Document document = documentRepository.findByClaimCriteriaId(claimCriteriaId)
+                .orElseThrow(() -> new CustomException(ErrorCode.INTERNAL_ERROR));
+
+        return new ClaimCriteriaAttachResponse(sessionId, claimCriteriaId, document.getFileName());
+    }
+    
+    @Transactional
+    public void detachClaimCriteria(Long sessionId, Long claimCriteriaId,
+                                    User user, String sessionKey) {
+        findOwned(sessionId, user, sessionKey);
+        claimCriteriaService.findOwned(claimCriteriaId, user, sessionKey);
+        chatSessionClaimCriteriaRepository.deleteByChatSessionIdAndClaimCriteriaId(sessionId, claimCriteriaId);
     }
 
     @Transactional(readOnly = true)

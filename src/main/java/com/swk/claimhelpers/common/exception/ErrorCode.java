@@ -19,6 +19,7 @@ public enum ErrorCode {
 
     // 약관(claim_criteria) 조회/삭제 에러
     CLAIM_CRITERIA_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 약관을 찾을 수 없습니다."),
+    CLAIM_CRITERIA_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "약관 처리가 아직 완료되지 않았습니다."),
 
     // 채팅 세션 조회 에러
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 채팅 세션을 찾을 수 없습니다."),
