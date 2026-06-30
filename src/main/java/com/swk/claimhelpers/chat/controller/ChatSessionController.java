@@ -1,11 +1,13 @@
 package com.swk.claimhelpers.chat.controller;
 
+import com.swk.claimhelpers.chat.dto.ChatMessageSendRequest;
 import com.swk.claimhelpers.chat.dto.ChatSessionCreateResponse;
 import com.swk.claimhelpers.chat.dto.ChatSessionDetailResponse;
 import com.swk.claimhelpers.chat.dto.ChatSessionListResponse;
 import com.swk.claimhelpers.chat.dto.ClaimCriteriaAttachRequest;
 import com.swk.claimhelpers.chat.dto.ClaimCriteriaAttachResponse;
 import com.swk.claimhelpers.chat.service.ChatSessionService;
+import com.swk.claimhelpers.chat.service.ChatStreamingService;
 import com.swk.claimhelpers.common.exception.CustomException;
 import com.swk.claimhelpers.common.exception.ErrorCode;
 import com.swk.claimhelpers.common.web.Owner;
@@ -13,6 +15,7 @@ import com.swk.claimhelpers.user.entity.User;
 import com.swk.claimhelpers.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 
@@ -33,6 +37,7 @@ import java.util.List;
 public class ChatSessionController {
 
     private final ChatSessionService chatSessionService;
+    private final ChatStreamingService chatStreamingService;
     private final UserService userService;
 
     @PostMapping
@@ -71,5 +76,13 @@ public class ChatSessionController {
             @PathVariable Long claimCriteriaId,
             Owner owner) {
         chatSessionService.detachClaimCriteria(sessionId, claimCriteriaId, owner.user(), owner.sessionKey());
+    }
+
+    @PostMapping(value = "/{sessionId}/messages", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter sendMessage(
+            @PathVariable Long sessionId,
+            @RequestBody ChatMessageSendRequest request,
+            Owner owner) {
+        return chatStreamingService.stream(sessionId, request.content(), owner.user(), owner.sessionKey());
     }
 }
