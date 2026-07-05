@@ -69,7 +69,7 @@ public class ChatSessionService {
 
     @Transactional(readOnly = true)
     public List<ChatSessionListResponse> findList(Long userId) {
-        List<ChatSession> sessions = chatSessionRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        List<ChatSession> sessions = chatSessionRepository.findByUserIdOrderByIdDesc(userId);
         if (sessions.isEmpty()) {
             return List.of();
         }

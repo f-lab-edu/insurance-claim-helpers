@@ -6,10 +6,9 @@ import com.swk.claimhelpers.chat.dto.ChatSessionListResponse;
 import com.swk.claimhelpers.chat.service.ChatSessionService;
 import com.swk.claimhelpers.common.exception.CustomException;
 import com.swk.claimhelpers.common.exception.ErrorCode;
-import com.swk.claimhelpers.common.util.SessionKeyResolver;
+import com.swk.claimhelpers.common.web.Owner;
 import com.swk.claimhelpers.user.entity.User;
 import com.swk.claimhelpers.user.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,14 +29,9 @@ public class ChatSessionController {
 
     private final ChatSessionService chatSessionService;
     private final UserService userService;
-    private final SessionKeyResolver sessionKeyResolver;
 
     @PostMapping
-    public ResponseEntity<ChatSessionCreateResponse> create(
-            @AuthenticationPrincipal OidcUser principal,
-            HttpServletRequest request) {
-
-        Owner owner = resolveOwner(principal, request);
+    public ResponseEntity<ChatSessionCreateResponse> create(Owner owner) {
         ChatSessionCreateResponse response = chatSessionService.create(owner.user(), owner.sessionKey());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -52,23 +46,7 @@ public class ChatSessionController {
     }
 
     @GetMapping("/{sessionId}")
-    public ChatSessionDetailResponse detail(
-            @PathVariable Long sessionId,
-            @AuthenticationPrincipal OidcUser principal,
-            HttpServletRequest request) {
-
-        Owner owner = resolveOwner(principal, request);
+    public ChatSessionDetailResponse detail(@PathVariable Long sessionId, Owner owner) {
         return chatSessionService.findDetail(sessionId, owner.user(), owner.sessionKey());
-    }
-
-    private Owner resolveOwner(OidcUser principal, HttpServletRequest request) {
-        if (principal != null) {
-            User user = userService.getByEmail(principal.getEmail());
-            return new Owner(user, null);
-        }
-        return new Owner(null, sessionKeyResolver.resolve(request));
-    }
-
-    private record Owner(User user, String sessionKey) {
     }
 }

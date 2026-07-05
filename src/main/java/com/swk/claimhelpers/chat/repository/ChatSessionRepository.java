@@ -10,6 +10,6 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> 
     List<ChatSession> findByUserId(Long userId);
 
     Optional<ChatSession> findBySessionKey(String sessionKey);
-
-    List<ChatSession> findByUserIdOrderByCreatedAtDesc(Long userId);
+    
+    List<ChatSession> findByUserIdOrderByIdDesc(Long userId);
 }

@@ -2,7 +2,7 @@ package com.swk.claimhelpers.policy.controller;
 
 import com.swk.claimhelpers.common.exception.CustomException;
 import com.swk.claimhelpers.common.exception.ErrorCode;
-import com.swk.claimhelpers.common.util.SessionKeyResolver;
+import com.swk.claimhelpers.common.web.Owner;
 import com.swk.claimhelpers.policy.dto.ClaimCriteriaListResponse;
 import com.swk.claimhelpers.policy.dto.ClaimCriteriaStatusResponse;
 import com.swk.claimhelpers.policy.dto.ClaimCriteriaUploadResponse;
@@ -14,7 +14,6 @@ import com.swk.claimhelpers.policy.service.ClaimCriteriaService;
 import com.swk.claimhelpers.policy.service.ClaimCriteriaUploadService;
 import com.swk.claimhelpers.user.entity.User;
 import com.swk.claimhelpers.user.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.task.TaskRejectedException;
@@ -44,7 +43,6 @@ public class ClaimCriteriaController {
     private final ClaimCriteriaProcessor processor;
     private final ClaimCriteriaService claimCriteriaService;
     private final UserService userService;
-    private final SessionKeyResolver sessionKeyResolver;
 
     /**
      * 약관 PDF 업로드.
@@ -55,19 +53,9 @@ public class ClaimCriteriaController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ClaimCriteriaUploadResponse> upload(
             @RequestParam("file") MultipartFile file,
-            @AuthenticationPrincipal OidcUser principal,
-            HttpServletRequest request) {
+            Owner owner) {
 
-        // 로그인 사용자는 email 로 User 조회, 비로그인은 HTTP 세션 ID 를 식별자로 사용한다.
-        User user = null;
-        String sessionKey = null;
-        if (principal != null) {
-            user = userService.getByEmail(principal.getEmail());
-        } else {
-            sessionKey = sessionKeyResolver.resolve(request);
-        }
-
-        Document document = uploadService.upload(file, user, sessionKey);
+        Document document = uploadService.upload(file, owner.user(), owner.sessionKey());
 
         // 업로드 트랜잭션이 커밋된 이후 시점
         ClaimCriteria claimCriteria = document.getClaimCriteria();
@@ -86,12 +74,7 @@ public class ClaimCriteriaController {
     }
     
     @GetMapping("/{id}/status")
-    public ClaimCriteriaStatusResponse status(
-            @PathVariable Long id,
-            @AuthenticationPrincipal OidcUser principal,
-            HttpServletRequest request) {
-
-        Owner owner = resolveOwner(principal, request);
+    public ClaimCriteriaStatusResponse status(@PathVariable Long id, Owner owner) {
         ClaimCriteria claimCriteria = claimCriteriaService.findOwned(id, owner.user(), owner.sessionKey());
         return ClaimCriteriaStatusResponse.from(claimCriteria);
     }
@@ -109,24 +92,8 @@ public class ClaimCriteriaController {
     }
     
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(
-            @PathVariable Long id,
-            @AuthenticationPrincipal OidcUser principal,
-            HttpServletRequest request) {
-
-        Owner owner = resolveOwner(principal, request);
+    public ResponseEntity<Void> delete(@PathVariable Long id, Owner owner) {
         claimCriteriaService.delete(id, owner.user(), owner.sessionKey());
         return ResponseEntity.noContent().build();
-    }
-
-    private Owner resolveOwner(OidcUser principal, HttpServletRequest request) {
-        if (principal != null) {
-            User user = userService.getByEmail(principal.getEmail());
-            return new Owner(user, null);
-        }
-        return new Owner(null, sessionKeyResolver.resolve(request));
-    }
-
-    private record Owner(User user, String sessionKey) {
     }
 }

@@ -192,7 +192,7 @@ class ChatSessionServiceTest {
         ClaimCriteria c1 = criteriaWithId(100L, ClaimCriteria.createForUser(owner));
         ClaimCriteria c2 = criteriaWithId(200L, ClaimCriteria.createForUser(owner));
 
-        given(chatSessionRepository.findByUserIdOrderByCreatedAtDesc(1L))
+        given(chatSessionRepository.findByUserIdOrderByIdDesc(1L))
                 .willReturn(List.of(session1, session2));
         given(chatSessionClaimCriteriaRepository.findByChatSessionIdInFetchClaimCriteria(any()))
                 .willReturn(List.of(
@@ -228,7 +228,7 @@ class ChatSessionServiceTest {
     @Test
     @DisplayName("목록: 세션이 없으면 빈 리스트를 반환하고 추가 조회를 하지 않는다")
     void 목록_빈_결과() {
-        given(chatSessionRepository.findByUserIdOrderByCreatedAtDesc(1L)).willReturn(List.of());
+        given(chatSessionRepository.findByUserIdOrderByIdDesc(1L)).willReturn(List.of());
 
         List<ChatSessionListResponse> result = chatSessionService.findList(1L);
 
