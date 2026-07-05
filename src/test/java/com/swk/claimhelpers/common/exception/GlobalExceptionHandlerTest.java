@@ -8,13 +8,18 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.lang.reflect.Method;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -47,10 +52,33 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void 검증_실패는_400_INVALID_INPUT을_반환한다() throws Exception {
+    void 검증_실패는_400_BAD_REQUEST를_반환한다() throws Exception {
         mockMvc.perform(get("/test/validation"))
-                .andExpect(status().isBadRequest()) // INVALID_INPUT = 400
-                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+    }
+
+    @Test
+    void 요청_본문_파싱_실패는_400_BAD_REQUEST를_반환한다() throws Exception {
+        mockMvc.perform(post("/test/body")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{bad json"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+    }
+
+    @Test
+    void 경로변수_타입_불일치는_400_BAD_REQUEST를_반환한다() throws Exception {
+        mockMvc.perform(get("/test/mismatch/not-a-number"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+    }
+
+    @Test
+    void 지원하지_않는_메서드는_405_METHOD_NOT_ALLOWED를_반환한다() throws Exception {
+        mockMvc.perform(post("/test/custom-default"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.code").value("METHOD_NOT_ALLOWED"));
     }
 
     @Test
@@ -92,6 +120,17 @@ class GlobalExceptionHandlerTest {
         public void unexpected() {
             // 핸들러가 잡지 않은 일반 예외 → 500 fallback 경로로 흘러가야 한다.
             throw new RuntimeException("DB 커넥션 실패: jdbc:postgresql://internal-host:5432");
+        }
+
+        @PostMapping("/test/body")
+        public void body(@RequestBody Payload payload) {
+        }
+
+        @GetMapping("/test/mismatch/{id}")
+        public void mismatch(@PathVariable Long id) {
+        }
+
+        record Payload(String name) {
         }
     }
 }

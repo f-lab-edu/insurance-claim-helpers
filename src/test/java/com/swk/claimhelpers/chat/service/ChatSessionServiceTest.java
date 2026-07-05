@@ -3,6 +3,7 @@ package com.swk.claimhelpers.chat.service;
 import com.swk.claimhelpers.chat.dto.ChatSessionCreateResponse;
 import com.swk.claimhelpers.chat.dto.ChatSessionDetailResponse;
 import com.swk.claimhelpers.chat.dto.ChatSessionListResponse;
+import com.swk.claimhelpers.chat.dto.ClaimCriteriaAttachResponse;
 import com.swk.claimhelpers.chat.entity.ChatMessage;
 import com.swk.claimhelpers.chat.entity.ChatSession;
 import com.swk.claimhelpers.chat.entity.ChatSessionClaimCriteria;
@@ -16,6 +17,7 @@ import com.swk.claimhelpers.policy.entity.ClaimCriteria;
 import com.swk.claimhelpers.policy.entity.ClaimCriteriaStatus;
 import com.swk.claimhelpers.policy.entity.Document;
 import com.swk.claimhelpers.policy.repository.DocumentRepository;
+import com.swk.claimhelpers.policy.service.ClaimCriteriaService;
 import com.swk.claimhelpers.user.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class ChatSessionServiceTest {
@@ -49,6 +52,9 @@ class ChatSessionServiceTest {
 
     @Mock
     private ChatMessageRepository chatMessageRepository;
+
+    @Mock
+    private ClaimCriteriaService claimCriteriaService;
 
     @InjectMocks
     private ChatSessionService chatSessionService;
@@ -267,5 +273,85 @@ class ChatSessionServiceTest {
         assertThat(result.messages())
                 .extracting(message -> message.role() + ":" + message.content())
                 .containsExactly("USER:질문", "ASSISTANT:답변");
+    }
+
+    @Test
+    @DisplayName("연결: COMPLETED 약관을 새로 연결하면 링크를 저장하고 파일명을 응답한다")
+    void 연결_정상() {
+        User owner = userWithId(1L, "owner@gmail.com");
+        ChatSession session = sessionWithId(10L, ChatSession.createForUser(owner));
+        ClaimCriteria criteria = criteriaWithId(100L, ClaimCriteria.createForUser(owner));
+        criteria.updateStatus(ClaimCriteriaStatus.COMPLETED);
+
+        given(chatSessionRepository.findById(10L)).willReturn(Optional.of(session));
+        given(claimCriteriaService.findOwned(100L, owner, null)).willReturn(criteria);
+        given(chatSessionClaimCriteriaRepository.existsById(any())).willReturn(false);
+        given(documentRepository.findByClaimCriteriaId(100L))
+                .willReturn(Optional.of(Document.create(criteria, "약관.pdf", 100L)));
+
+        ClaimCriteriaAttachResponse response =
+                chatSessionService.attachClaimCriteria(10L, 100L, owner, null);
+
+        assertThat(response.chatSessionId()).isEqualTo(10L);
+        assertThat(response.claimCriteriaId()).isEqualTo(100L);
+        assertThat(response.fileName()).isEqualTo("약관.pdf");
+        then(chatSessionClaimCriteriaRepository).should().save(any(ChatSessionClaimCriteria.class));
+    }
+
+    @Test
+    @DisplayName("연결: 이미 연결된 약관이면 INSERT 없이 멱등하게 응답한다")
+    void 연결_멱등() {
+        User owner = userWithId(1L, "owner@gmail.com");
+        ChatSession session = sessionWithId(10L, ChatSession.createForUser(owner));
+        ClaimCriteria criteria = criteriaWithId(100L, ClaimCriteria.createForUser(owner));
+        criteria.updateStatus(ClaimCriteriaStatus.COMPLETED);
+
+        given(chatSessionRepository.findById(10L)).willReturn(Optional.of(session));
+        given(claimCriteriaService.findOwned(100L, owner, null)).willReturn(criteria);
+        given(chatSessionClaimCriteriaRepository.existsById(any())).willReturn(true);
+        given(documentRepository.findByClaimCriteriaId(100L))
+                .willReturn(Optional.of(Document.create(criteria, "약관.pdf", 100L)));
+
+        ClaimCriteriaAttachResponse response =
+                chatSessionService.attachClaimCriteria(10L, 100L, owner, null);
+
+        assertThat(response.fileName()).isEqualTo("약관.pdf");
+        then(chatSessionClaimCriteriaRepository).should(never())
+                .save(any(ChatSessionClaimCriteria.class));
+    }
+
+    @Test
+    @DisplayName("연결: 약관이 COMPLETED 가 아니면 CLAIM_CRITERIA_NOT_COMPLETED 예외를 던진다")
+    void 연결_미완료_예외() {
+        User owner = userWithId(1L, "owner@gmail.com");
+        ChatSession session = sessionWithId(10L, ChatSession.createForUser(owner));
+        ClaimCriteria criteria = criteriaWithId(100L, ClaimCriteria.createForUser(owner));
+        criteria.updateStatus(ClaimCriteriaStatus.PROCESSING);
+
+        given(chatSessionRepository.findById(10L)).willReturn(Optional.of(session));
+        given(claimCriteriaService.findOwned(100L, owner, null)).willReturn(criteria);
+
+        assertThatThrownBy(() -> chatSessionService.attachClaimCriteria(10L, 100L, owner, null))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.CLAIM_CRITERIA_NOT_COMPLETED);
+        then(chatSessionClaimCriteriaRepository).should(never())
+                .save(any(ChatSessionClaimCriteria.class));
+    }
+
+    @Test
+    @DisplayName("해제: 세션·약관 소유권 검증 후 링크를 멱등 삭제한다")
+    void 해제_위임() {
+        User owner = userWithId(1L, "owner@gmail.com");
+        ChatSession session = sessionWithId(10L, ChatSession.createForUser(owner));
+        ClaimCriteria criteria = criteriaWithId(100L, ClaimCriteria.createForUser(owner));
+
+        given(chatSessionRepository.findById(10L)).willReturn(Optional.of(session));
+        given(claimCriteriaService.findOwned(100L, owner, null)).willReturn(criteria);
+
+        chatSessionService.detachClaimCriteria(10L, 100L, owner, null);
+
+        then(chatSessionClaimCriteriaRepository).should()
+                .deleteByChatSessionIdAndClaimCriteriaId(10L, 100L);
     }
 }
