@@ -12,7 +12,11 @@ import java.util.*;
 public interface ChatSessionClaimCriteriaRepository extends JpaRepository<ChatSessionClaimCriteria, ChatSessionClaimCriteriaId> {
 
     List<ChatSessionClaimCriteria> findByChatSessionId(Long chatSessionId);
-    
+
+    @Query("SELECT l FROM ChatSessionClaimCriteria l JOIN FETCH l.claimCriteria "
+            + "WHERE l.chatSession.id IN :sessionIds")
+    List<ChatSessionClaimCriteria> findByChatSessionIdInFetchClaimCriteria(@Param("sessionIds") Collection<Long> sessionIds);
+
     @Modifying
     @Query("DELETE FROM ChatSessionClaimCriteria c WHERE c.claimCriteria.id = :claimCriteriaId")
     void deleteByClaimCriteriaId(@Param("claimCriteriaId") Long claimCriteriaId);

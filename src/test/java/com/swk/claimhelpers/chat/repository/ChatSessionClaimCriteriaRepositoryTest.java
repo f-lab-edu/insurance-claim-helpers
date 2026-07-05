@@ -45,4 +45,26 @@ class ChatSessionClaimCriteriaRepositoryTest extends AbstractPostgresContainerTe
         assertThat(remaining).hasSize(1);
         assertThat(remaining.get(0).getClaimCriteria().getId()).isEqualTo(other.getId());
     }
+
+    @Test
+    @DisplayName("여러 세션의 링크를 약관과 함께 한 번에 조회한다")
+    void 여러세션_링크_일괄조회() {
+        User user = em.persist(User.create("owner@gmail.com"));
+        ChatSession session1 = em.persist(ChatSession.createForUser(user));
+        ChatSession session2 = em.persist(ChatSession.createForUser(user));
+        ClaimCriteria c1 = em.persist(ClaimCriteria.createForUser(user));
+        ClaimCriteria c2 = em.persist(ClaimCriteria.createForUser(user));
+        em.persist(ChatSessionClaimCriteria.create(session1, c1));
+        em.persist(ChatSessionClaimCriteria.create(session2, c2));
+        em.flush();
+        em.clear();
+
+        List<ChatSessionClaimCriteria> result = repository.findByChatSessionIdInFetchClaimCriteria(
+                List.of(session1.getId(), session2.getId()));
+
+        assertThat(result).hasSize(2);
+        assertThat(result)
+                .extracting(l -> l.getClaimCriteria().getId())
+                .containsExactlyInAnyOrder(c1.getId(), c2.getId());
+    }
 }

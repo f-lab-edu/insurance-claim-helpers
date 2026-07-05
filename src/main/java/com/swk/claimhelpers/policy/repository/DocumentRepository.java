@@ -19,4 +19,7 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
             + "ORDER BY c.createdAt DESC")
     List<Document> findByOwnerUserIdAndStatus(@Param("userId") Long userId,
                                               @Param("status") ClaimCriteriaStatus status);
+
+    @Query("SELECT d FROM Document d JOIN FETCH d.claimCriteria c WHERE c.id IN :claimCriteriaIds")
+    List<Document> findByClaimCriteriaIdIn(@Param("claimCriteriaIds") Collection<Long> claimCriteriaIds);
 }
