@@ -1,5 +1,6 @@
 package com.swk.claimhelpers.chat.service;
 
+import com.swk.claimhelpers.chat.dto.ChatContext;
 import com.swk.claimhelpers.chat.dto.PreparedChat;
 import com.swk.claimhelpers.chat.entity.ChatMessage;
 import com.swk.claimhelpers.chat.entity.ChatSession;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,6 +25,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -31,6 +34,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -45,8 +51,11 @@ class ChatMessageServiceTest {
     @Mock ChatMessageRepository chatMessageRepository;
     @Mock VectorStore vectorStore;
     @Mock ChatPromptBuilder chatPromptBuilder;
+    @Mock QueryRewriter queryRewriter;
 
     @InjectMocks ChatMessageService service;
+
+    @Captor ArgumentCaptor<List<ChatMessage>> historyCaptor;
 
     @BeforeEach
     void setUp() {
@@ -61,45 +70,51 @@ class ChatMessageServiceTest {
         return link;
     }
 
+    // ── loadContext ──────────────────────────────────────────
+
     @Test
     void 연결_약관_없으면_예외() {
         when(chatSessionService.findOwned(1L, null, "sk")).thenReturn(mock(ChatSession.class));
         when(linkRepository.findByChatSessionId(1L)).thenReturn(List.of());
 
-        assertThatThrownBy(() -> service.prepare(1L, "질문", null, "sk"))
+        assertThatThrownBy(() -> service.loadContext(1L, "질문", null, "sk"))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_CLAIM_CRITERIA_ATTACHED);
     }
 
     @Test
-    void USER_메시지_저장() {
+    void USER_메시지_저장_후_약관과_최근이력_컨텍스트_반환() {
         ChatSessionClaimCriteria link = linkWithCriteriaId(10L);
         when(chatSessionService.findOwned(1L, null, "sk")).thenReturn(mock(ChatSession.class));
         when(linkRepository.findByChatSessionId(1L)).thenReturn(List.of(link));
-        when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
+        ChatMessage saved = mock(ChatMessage.class);
+        when(chatMessageRepository.findByChatSessionIdOrderByIdDesc(eq(1L), any(Pageable.class)))
+                .thenReturn(List.of(saved));
 
-        service.prepare(1L, "질문", null, "sk");
+        ChatContext context = service.loadContext(1L, "질문", null, "sk");
 
         ArgumentCaptor<ChatMessage> captor = ArgumentCaptor.forClass(ChatMessage.class);
         verify(chatMessageRepository).save(captor.capture());
         assertThat(captor.getValue().getRole()).isEqualTo(MessageRole.USER);
         assertThat(captor.getValue().getContent()).isEqualTo("질문");
+        assertThat(context.criteriaIds()).containsExactly(10L);
+        assertThat(context.recentHistory()).containsExactly(saved);
     }
 
-    @Test
-    void 검색_요청에_IN_필터와_임계값_구성() {
-        ChatSessionClaimCriteria link1 = linkWithCriteriaId(10L);
-        ChatSessionClaimCriteria link2 = linkWithCriteriaId(20L);
-        when(chatSessionService.findOwned(1L, null, "sk")).thenReturn(mock(ChatSession.class));
-        when(linkRepository.findByChatSessionId(1L)).thenReturn(List.of(link1, link2));
-        when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
+    // ── prepareContext ───────────────────────────────────────
 
-        service.prepare(1L, "질문", null, "sk");
+    @Test
+    void 검색_요청에_재작성_쿼리와_IN_필터_임계값_구성() {
+        when(queryRewriter.rewrite(eq("질문"), anyList())).thenReturn("재작성된 질문");
+        when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
+        ChatContext context = new ChatContext(List.of(10L, 20L), List.of(mock(ChatMessage.class)));
+
+        service.prepareContext("질문", context);
 
         ArgumentCaptor<SearchRequest> captor = ArgumentCaptor.forClass(SearchRequest.class);
         verify(vectorStore).similaritySearch(captor.capture());
         SearchRequest request = captor.getValue();
-        assertThat(request.getQuery()).isEqualTo("질문");
+        assertThat(request.getQuery()).isEqualTo("재작성된 질문");
         assertThat(request.getTopK()).isEqualTo(5);
         assertThat(request.getSimilarityThreshold()).isEqualTo(0.5);
         Filter.Expression expr = request.getFilterExpression();
@@ -108,37 +123,51 @@ class ChatMessageServiceTest {
     }
 
     @Test
+    void 후속질문은_현재질문_제외한_이력으로_재작성() {
+        ChatMessage q1 = mock(ChatMessage.class);
+        ChatMessage a1 = mock(ChatMessage.class);
+        ChatMessage current = mock(ChatMessage.class);   // 현재 질문
+        when(queryRewriter.rewrite(eq("질문"), anyList())).thenReturn("재작성");
+        when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
+        ChatContext context = new ChatContext(List.of(10L), List.of(q1, a1, current));
+
+        service.prepareContext("질문", context);
+
+        verify(queryRewriter).rewrite(eq("질문"), historyCaptor.capture());
+        assertThat(historyCaptor.getValue()).containsExactly(q1, a1);   // current(현재 질문) 제외
+    }
+
+    @Test
     void 관련_청크_있으면_프롬프트_빌더에_위임() {
-        ChatSessionClaimCriteria link = linkWithCriteriaId(10L);
-        when(chatSessionService.findOwned(1L, null, "sk")).thenReturn(mock(ChatSession.class));
-        when(linkRepository.findByChatSessionId(1L)).thenReturn(List.of(link));
+        when(queryRewriter.rewrite(anyString(), anyList())).thenReturn("재작성");
         List<Document> chunks = List.of(new Document("청크"));
         when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(chunks);
-        List<ChatMessage> history = List.of();
-        when(chatMessageRepository.findByChatSessionIdOrderByCreatedAtAsc(1L)).thenReturn(history);
+        List<ChatMessage> recentHistory = List.of(mock(ChatMessage.class));
         List<Message> built = List.of();
-        when(chatPromptBuilder.build(chunks, history)).thenReturn(built);
+        when(chatPromptBuilder.build(chunks, recentHistory)).thenReturn(built);
+        ChatContext context = new ChatContext(List.of(10L), recentHistory);
 
-        PreparedChat result = service.prepare(1L, "질문", null, "sk");
+        PreparedChat result = service.prepareContext("질문", context);
 
         assertThat(result.hasRelevantChunks()).isTrue();
         assertThat(result.messages()).isSameAs(built);
-        verify(chatPromptBuilder).build(chunks, history);
+        verify(chatPromptBuilder).build(chunks, recentHistory);   // 프롬프트엔 현재 질문 포함한 전체 이력
     }
 
     @Test
     void 관련_청크_없으면_빈_프롬프트와_false_플래그() {
-        ChatSessionClaimCriteria link = linkWithCriteriaId(10L);
-        when(chatSessionService.findOwned(1L, null, "sk")).thenReturn(mock(ChatSession.class));
-        when(linkRepository.findByChatSessionId(1L)).thenReturn(List.of(link));
+        when(queryRewriter.rewrite(anyString(), anyList())).thenReturn("재작성");
         when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
+        ChatContext context = new ChatContext(List.of(10L), List.of(mock(ChatMessage.class)));
 
-        PreparedChat result = service.prepare(1L, "질문", null, "sk");
+        PreparedChat result = service.prepareContext("질문", context);
 
         assertThat(result.hasRelevantChunks()).isFalse();
         assertThat(result.messages()).isEmpty();
         verify(chatPromptBuilder, never()).build(any(), any());
     }
+
+    // ── saveAssistant ────────────────────────────────────────
 
     @Test
     void ASSISTANT_저장_후_id_반환() {

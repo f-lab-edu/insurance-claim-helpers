@@ -40,6 +40,8 @@ spring:
         options:
           model: claude-sonnet-4-6
           max-tokens: 4096
+          # 미지정 시 Spring AI 기본값 0.8 적용
+          temperature: 0.2
     openai:
       embedding:
         options:

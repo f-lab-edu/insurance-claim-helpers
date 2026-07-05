@@ -1,5 +1,6 @@
 package com.swk.claimhelpers.chat.service;
 
+import com.swk.claimhelpers.chat.dto.ChatContext;
 import com.swk.claimhelpers.chat.dto.ChatStreamDelta;
 import com.swk.claimhelpers.chat.dto.ChatStreamDone;
 import com.swk.claimhelpers.chat.dto.PreparedChat;
@@ -9,8 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import java.io.IOException;
+import reactor.core.Disposable;
 
 @Slf4j
 @Service
@@ -26,7 +26,8 @@ public class ChatStreamingService {
     private final ChatClient chatClient;
 
     public SseEmitter stream(Long sessionId, String content, User user, String sessionKey) {
-        PreparedChat prepared = chatMessageService.prepare(sessionId, content, user, sessionKey);
+        ChatContext context = chatMessageService.loadContext(sessionId, content, user, sessionKey);
+        PreparedChat prepared = chatMessageService.prepareContext(content, context);
 
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
 
@@ -36,7 +37,7 @@ public class ChatStreamingService {
         }
 
         StringBuilder responseBuffer = new StringBuilder();
-        chatClient.prompt()
+        Disposable subscription = chatClient.prompt()
                 .messages(prepared.messages())
                 .stream()
                 .content()
@@ -48,7 +49,16 @@ public class ChatStreamingService {
                         },
                         () -> complete(emitter, sessionId, responseBuffer.toString()));
 
+        registerCleanup(emitter, subscription, sessionId);
         return emitter;
+    }
+    
+    void registerCleanup(SseEmitter emitter, Disposable subscription, Long sessionId) {
+        emitter.onTimeout(() -> {
+            log.warn("채팅 스트림 타임아웃: sessionId={}", sessionId);
+            subscription.dispose();
+        });
+        emitter.onError(throwable -> subscription.dispose());
     }
 
     private void respondFixed(SseEmitter emitter, Long sessionId, String message) {
@@ -56,22 +66,23 @@ public class ChatStreamingService {
         sendDelta(emitter, responseBuffer, message);
         complete(emitter, sessionId, responseBuffer.toString());
     }
-
-    private void sendDelta(SseEmitter emitter, StringBuilder responseBuffer, String delta) {
+    
+    void sendDelta(SseEmitter emitter, StringBuilder responseBuffer, String delta) {
         responseBuffer.append(delta);
         try {
             emitter.send(SseEmitter.event().data(new ChatStreamDelta(delta)));
-        } catch(IOException e) {
+        } catch(Exception e) {
             emitter.completeWithError(e);
         }
     }
-
-    private void complete(SseEmitter emitter, Long sessionId, String fullContent) {
+    
+    void complete(SseEmitter emitter, Long sessionId, String fullContent) {
         try {
             Long messageId = chatMessageService.saveAssistant(sessionId, fullContent);
             emitter.send(SseEmitter.event().data(new ChatStreamDone(true, messageId)));
             emitter.complete();
-        } catch(IOException e) {
+        } catch(Exception e) {
+            log.error("채팅 완료 처리 실패: sessionId={}", sessionId, e);
             emitter.completeWithError(e);
         }
     }
