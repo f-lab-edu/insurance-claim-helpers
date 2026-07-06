@@ -21,7 +21,7 @@ export default function Toast({ message, onClose, durationMs = 3000 }: ToastProp
   }
 
   return (
-    <div className={styles.toast} role="alert" onClick={onClose}>
+    <div className={styles.toast} role="alert">
       {message}
     </div>
   );
