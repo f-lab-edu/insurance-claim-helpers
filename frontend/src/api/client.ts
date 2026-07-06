@@ -1,3 +1,31 @@
+export interface ApiErrorBody {
+  code: string;
+  message: string;
+}
+
+export class ApiError extends Error {
+  readonly code: string;
+  readonly status: number;
+
+  constructor(code: string, status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+    this.status = status;
+  }
+}
+
+export async function toApiError(response: Response): Promise<ApiError> {
+  try {
+    const body = (await response.json()) as Partial<ApiErrorBody>;
+    if(body && typeof body.code === 'string') {
+      return new ApiError(body.code, response.status, body.message ?? '');
+    }
+  } catch {
+  }
+  return new ApiError('UNKNOWN', response.status, `요청 실패: ${response.status}`);
+}
+
 interface GetOptions {
   //   true  → 401이면 throw 대신 null 반환
   //   false → 401도 일반 오류로 취급해 throw
@@ -17,7 +45,7 @@ export async function apiGet<T>(path: string, options: GetOptions = {}): Promise
   }
 
   if(!response.ok) {
-    throw new Error(`GET ${path} 실패: ${response.status}`);
+    throw await toApiError(response);
   }
 
   return (await response.json()) as T;
@@ -34,11 +62,36 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   });
 
   if(!response.ok) {
-    throw new Error(`POST ${path} 실패: ${response.status}`);
+    throw await toApiError(response);
   }
 
   if(response.status === 204) {
     return undefined as T;
+  }
+
+  return (await response.json()) as T;
+}
+
+export async function apiDelete(path: string): Promise<void> {
+  const response = await fetch(path, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+
+  if(!response.ok) {
+    throw await toApiError(response);
+  }
+}
+
+export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  const response = await fetch(path, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  });
+
+  if(!response.ok) {
+    throw await toApiError(response);
   }
 
   return (await response.json()) as T;
