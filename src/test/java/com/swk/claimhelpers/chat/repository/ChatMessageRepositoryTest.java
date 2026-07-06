@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -68,5 +69,27 @@ class ChatMessageRepositoryTest extends AbstractPostgresContainerTest {
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getChatSession().getId()).isEqualTo(withMessage.getId());
+    }
+
+    @Test
+    @DisplayName("세션의 최근 N개 메시지를 최신순(id 내림차순)으로 반환한다")
+    void 세션의_최근_N개_메시지를_최신순으로_반환() {
+        User user = em.persist(User.create("owner@gmail.com"));
+        ChatSession session = em.persist(ChatSession.createForUser(user));
+        ChatSession other = em.persist(ChatSession.createForSession("other-key"));
+        em.persist(ChatMessage.create(other, MessageRole.USER, "다른세션-메시지"));
+
+        for(int i = 1; i <= 12; i++) {
+            em.persist(ChatMessage.create(session, MessageRole.USER, "msg-" + i));
+        }
+        em.flush();
+        em.clear();
+
+        List<ChatMessage> result = repository.findByChatSessionIdOrderByIdDesc(
+                session.getId(), PageRequest.of(0, 10));
+
+        assertThat(result).hasSize(10);
+        assertThat(result.get(0).getContent()).isEqualTo("msg-12");
+        assertThat(result.get(9).getContent()).isEqualTo("msg-3");
     }
 }

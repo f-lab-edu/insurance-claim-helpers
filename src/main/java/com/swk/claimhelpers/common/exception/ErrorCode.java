@@ -23,6 +23,7 @@ public enum ErrorCode {
 
     // 채팅 세션 조회 에러
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 채팅 세션을 찾을 수 없습니다."),
+    NO_CLAIM_CRITERIA_ATTACHED(HttpStatus.BAD_REQUEST, "세션에 연결된 약관이 없습니다."),
 
     // 파일 업로드 요청 검증 에러
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "PDF 파일만 업로드할 수 있습니다."),

@@ -35,6 +35,13 @@ spring:
             redirect-uri: "{baseUrl}/auth/google/callback"  # 콜백 경로(커스텀)
 
   ai:
+    anthropic:
+      chat:
+        options:
+          model: claude-sonnet-4-6
+          max-tokens: 4096
+          # 미지정 시 Spring AI 기본값 0.8 적용
+          temperature: 0.2
     openai:
       embedding:
         options:
@@ -57,6 +64,10 @@ embedding:
   executor:
     max-concurrent: 5
     queue-capacity: 20
+
+chat:
+  rag:
+    similarity-threshold: 0.5
 
 
 #logging:
