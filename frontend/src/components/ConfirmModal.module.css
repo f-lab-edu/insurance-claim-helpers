@@ -1,0 +1,62 @@
+/* 화면 전체를 덮는 반투명 오버레이 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+}
+
+/* 중앙 다이얼로그 카드 */
+.dialog {
+  width: 100%;
+  max-width: 360px;
+  padding: 24px;
+  background-color: var(--color-bg);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.message {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cancel {
+  font-size: 14px;
+  color: var(--color-text);
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+/* 삭제(위험) 버튼 */
+.confirm {
+  font-size: 14px;
+  color: #ffffff;
+  background-color: #dc2626;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
