@@ -1,0 +1,161 @@
+.main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+/* 사용자 정보 섹션 */
+.userSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.greeting {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.joinedAt {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.logout {
+  font-size: 14px;
+  color: var(--color-text);
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.section {
+  margin-top: 32px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 12px;
+}
+
+/* 목록 공통 */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* claim_criteria 항목 행 */
+.criteriaItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.criteriaInfo {
+  min-width: 0;
+}
+
+.fileName {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.deleteButton {
+  font-size: 13px;
+  color: #dc2626;
+  background: none;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.deleteButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* 상담 내역 항목 (버튼 — 클릭 시 이동) */
+.sessionItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: none;
+  cursor: pointer;
+}
+
+.sessionTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sessionCriteria {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sessionDate {
+  font-size: 12px;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.sessionLast {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 빈 상태 */
+.empty {
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #9ca3af;
+  border: 1px dashed #e5e7eb;
+  border-radius: 10px;
+}
+
+.loading {
+  padding: 64px 24px;
+  text-align: center;
+  color: #6b7280;
+}
