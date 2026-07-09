@@ -110,6 +110,65 @@ export default function MyPage() {
     }
   }
 
+  // 약관 목록 섹션 본문
+  function renderCriteriaList() {
+    if(dataLoading) {
+      return <div className={styles.empty}>불러오는 중...</div>;
+    }
+    if(criteria.length === 0) {
+      return <div className={styles.empty}>아직 약관이 없습니다.</div>;
+    }
+    return (
+      <div className={styles.list}>
+        {criteria.map((item) => (
+          <div key={item.id} className={styles.criteriaItem}>
+            <div className={styles.criteriaInfo}>
+              <div className={styles.fileName}>{item.fileName}</div>
+              <div className={styles.meta}>
+                {formatFileSize(item.fileSize)} · {formatDate(item.createdAt)}
+              </div>
+            </div>
+            <button
+              className={styles.deleteButton}
+              onClick={() => setDeleteTarget(item)}
+            >
+              삭제
+            </button>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // 상담 내역 섹션 본문
+  function renderSessionList() {
+    if(dataLoading) {
+      return <div className={styles.empty}>불러오는 중...</div>;
+    }
+    if(sessions.length === 0) {
+      return <div className={styles.empty}>아직 상담 내역이 없습니다.</div>;
+    }
+    return (
+      <div className={styles.list}>
+        {sessions.map((session) => (
+          <button
+            key={session.id}
+            className={styles.sessionItem}
+            onClick={() => navigate(`/chat/${session.id}`)}
+          >
+            <div className={styles.sessionTop}>
+              <span className={styles.sessionCriteria}>{sessionCriteriaLabel(session)}</span>
+              <span className={styles.sessionDate}>{formatDate(session.createdAt)}</span>
+            </div>
+            {session.lastMessage !== null && (
+              <div className={styles.sessionLast}>{session.lastMessage}</div>
+            )}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   // 인증 확인 전 또는 비로그인(리다이렉트 직전)에는 아무것도 그리지 않음
   if(authLoading || user === null) {
     return (
@@ -136,58 +195,13 @@ export default function MyPage() {
         {/* 내 약관 목록 */}
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>내 약관 목록</h2>
-          {dataLoading
-            ? <div className={styles.empty}>불러오는 중...</div>
-            : criteria.length === 0
-              ? <div className={styles.empty}>아직 약관이 없습니다.</div>
-              : (
-                  <div className={styles.list}>
-                    {criteria.map((item) => (
-                      <div key={item.id} className={styles.criteriaItem}>
-                        <div className={styles.criteriaInfo}>
-                          <div className={styles.fileName}>{item.fileName}</div>
-                          <div className={styles.meta}>
-                            {formatFileSize(item.fileSize)} · {formatDate(item.createdAt)}
-                          </div>
-                        </div>
-                        <button
-                          className={styles.deleteButton}
-                          onClick={() => setDeleteTarget(item)}
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+          {renderCriteriaList()}
         </section>
 
         {/* 최근 상담 내역 */}
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>최근 상담 내역</h2>
-          {dataLoading
-            ? <div className={styles.empty}>불러오는 중...</div>
-            : sessions.length === 0
-              ? <div className={styles.empty}>아직 상담 내역이 없습니다.</div>
-              : (
-                  <div className={styles.list}>
-                    {sessions.map((session) => (
-                      <button
-                        key={session.id}
-                        className={styles.sessionItem}
-                        onClick={() => navigate(`/chat/${session.id}`)}
-                      >
-                        <div className={styles.sessionTop}>
-                          <span className={styles.sessionCriteria}>{sessionCriteriaLabel(session)}</span>
-                          <span className={styles.sessionDate}>{formatDate(session.createdAt)}</span>
-                        </div>
-                        {session.lastMessage !== null && (
-                          <div className={styles.sessionLast}>{session.lastMessage}</div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
+          {renderSessionList()}
         </section>
       </main>
 
