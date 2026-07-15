@@ -67,7 +67,7 @@ embedding:
 
 chat:
   rag:
-    similarity-threshold: 0.5
+    similarity-threshold: 0.3
 
 
 #logging:
