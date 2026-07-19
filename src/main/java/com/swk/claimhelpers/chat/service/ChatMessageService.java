@@ -69,15 +69,18 @@ public class ChatMessageService {
     }
     
     public PreparedChat prepareContext(String content, ChatContext context) {
-        List<ChatMessage> recentHistory = context.recentHistory();
-        List<ChatMessage> priorHistory = recentHistory.subList(0, recentHistory.size() - 1);
-
-        String searchQuery = queryRewriter.rewrite(content, priorHistory);
-        List<Document> chunks = searchChunks(searchQuery, context.criteriaIds());
+        List<Document> chunks = retrieve(content, context);
         if(chunks.isEmpty()) {
             return new PreparedChat(List.of(), false);
         }
-        return new PreparedChat(chatPromptBuilder.build(chunks, recentHistory), true);
+        return new PreparedChat(chatPromptBuilder.build(chunks, context.recentHistory()), true);
+    }
+    
+    public List<Document> retrieve(String content, ChatContext context) {
+        List<ChatMessage> recentHistory = context.recentHistory();
+        List<ChatMessage> priorHistory = recentHistory.subList(0, recentHistory.size() - 1);
+        String searchQuery = queryRewriter.rewrite(content, priorHistory);
+        return searchChunks(searchQuery, context.criteriaIds());
     }
     
     @Transactional

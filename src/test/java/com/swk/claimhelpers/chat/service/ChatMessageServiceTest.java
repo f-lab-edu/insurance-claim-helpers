@@ -167,6 +167,24 @@ class ChatMessageServiceTest {
         verify(chatPromptBuilder, never()).build(any(), any());
     }
 
+    // ── retrieve ─────────────────────────────────────────────
+
+    @Test
+    void retrieve는_재작성쿼리로_검색해_청크를_반환한다() {
+        ChatMessage q1 = mock(ChatMessage.class);
+        ChatMessage current = mock(ChatMessage.class);   // 현재 질문
+        when(queryRewriter.rewrite(eq("질문"), anyList())).thenReturn("재작성");
+        List<Document> chunks = List.of(new Document("청크"));
+        when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(chunks);
+        ChatContext context = new ChatContext(List.of(10L), List.of(q1, current));
+
+        List<Document> result = service.retrieve("질문", context);
+
+        assertThat(result).isSameAs(chunks);
+        verify(queryRewriter).rewrite(eq("질문"), historyCaptor.capture());
+        assertThat(historyCaptor.getValue()).containsExactly(q1);
+    }
+
     // ── saveAssistant ────────────────────────────────────────
 
     @Test
