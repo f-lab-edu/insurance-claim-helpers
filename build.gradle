@@ -99,8 +99,7 @@ tasks.named('test') {
     jvmArgs("-javaagent:${configurations.mockitoAgent.asPath}")
 }
 
-// RAG 품질 평가 전용 태스크. 실 API 키(OpenAI/Anthropic) 필요.
-// 실행 예: SPRING_AI_OPENAI_API_KEY=... SPRING_AI_ANTHROPIC_API_KEY=... ./gradlew evalTest
+// RAG 품질 평가 전용 태스크. .env 의 API 키·OAuth 자격증명 필요(local 프로필이 매핑)
 tasks.register('evalTest', Test) {
     description = 'RAG 답변 품질 평가(@Tag("eval"))만 실행. 실 API 호출 — 비용 발생.'
     group = 'verification'
@@ -110,6 +109,19 @@ tasks.register('evalTest', Test) {
         includeTags 'eval'
     }
     jvmArgs("-javaagent:${configurations.mockitoAgent.asPath}")
-    // 실 API 결과는 매번 달라지므로 캐시로 스킵되지 않게 항상 실행
     outputs.upToDateWhen { false }
+    testLogging {
+        showStandardStreams = true
+        events "skipped", "passed", "failed"
+    }
+    // .env 를 읽어 테스트 JVM 환경변수로 주입
+    doFirst {
+        File envFile = rootProject.file('.env')
+        if(envFile.exists()) {
+            envFile.readLines('UTF-8').findAll { it =~ /^\s*\w+\s*=/ }.each { line ->
+                List<String> kv = line.split('=', 2)
+                environment(kv[0].trim(), kv[1].trim())
+            }
+        }
+    }
 }
