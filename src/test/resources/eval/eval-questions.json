@@ -1,0 +1,10 @@
+[
+  { "id": "Q1", "question": "술 마시고 운전하다 사고를 냈는데, 이럴 때 제가 따로 물어내야 하는 돈이 있나요? 얼마나 되나요?", "answerable": true },
+  { "id": "Q2", "question": "대인배상 2는 대인배상 1이랑 뭐가 다른 거예요? 각각 언제 나오나요?", "answerable": true },
+  { "id": "Q3", "question": "제 차 수리비를 보험으로 받을 때, 제가 일부 내야 하는 금액은 어떻게 정해지나요?", "answerable": true },
+  { "id": "Q4", "question": "제가 낸 사고로 상대방 차에 있던 노트북이랑 휴대폰이 망가졌는데, 이것도 보험으로 물어주나요?", "answerable": true },
+  { "id": "Q5", "question": "보험금을 신청하면 며칠 만에 받을 수 있어요? 늦게 주면 이자도 붙나요?", "answerable": true },
+  { "id": "Q6", "question": "보험이 없는 차에 사고를 당해서 다쳤어요. 우리 가족 중에 누구까지 보상받을 수 있나요?", "answerable": true },
+  { "id": "Q7", "question": "차에 타고 있던 반려동물이 사고로 다치면 병원비도 보상받을 수 있나요?", "answerable": false },
+  { "id": "Q8", "question": "과속이나 신호위반으로 범칙금이 나왔는데, 이것도 보험으로 처리되나요?", "answerable": false }
+]
