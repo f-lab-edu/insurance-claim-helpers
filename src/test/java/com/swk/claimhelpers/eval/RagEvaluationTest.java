@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.ai.chat.client.ChatClient;
@@ -64,8 +65,7 @@ class RagEvaluationTest extends AbstractPostgresContainerTest {
     private final EvalReport report = new EvalReport();
 
     @BeforeAll
-    void 약관_임베딩_적재() throws Exception {
-        Path workDir = Files.createTempDirectory("eval-");
+    void 약관_임베딩_적재(@TempDir Path workDir) throws Exception {
         Path pdf = workDir.resolve("input.pdf");
         Path out = Files.createDirectory(workDir.resolve("output"));
         try(InputStream in = getClass().getResourceAsStream(EVAL_PDF)) {
